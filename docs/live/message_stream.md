@@ -615,11 +615,11 @@ data字段
 | username | str | 用户名称                     |     |
 | guard_level | num | 大航海等级  |  1: 总督 2: 提督 3:舰长     |
 | num | num | 数量                       |     |
-| price | num | 待调查                      |     |
+| price | num | 价值（金瓜子）                      |     |
 | gift_id | num | 礼物id                     |     |
 | gift_name | str | 礼物名称                     |     |
-| start_time | num | 待调查                      |     |
-| end_time | num | 待调查                      |     |
+| start_time | num | 开始时间戳                      |     |
+| end_time | num | 结束时间戳                      |     |
 
 <details>
 
