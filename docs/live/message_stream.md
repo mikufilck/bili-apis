@@ -459,8 +459,8 @@ json格式
 
 | 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd | str  | "DM_INTERACTION" | 如果是进入直播间或关注消息，内容则是"INTERACT_WORD" |
-| data | obj  | 进入直播间的用户的信息 |  |
+| cmd | str  | "DM_INTERACTION" | 如果是连续弹幕消息，内容是"DM_INTERACTION" |
+| data | obj  | 连续弹幕的信息 |  |
 
 data字段
 
