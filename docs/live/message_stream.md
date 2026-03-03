@@ -901,11 +901,11 @@ data字段
 | biz_source | str | 待调查 | |
 | blind_gift | | 待调查 | |
 | broadcast_id | num | 待调查 | |
-| coin_type | str | 待调查 | |
+| coin_type | str | 金瓜子"glod"或者银瓜子 | |
 | combo_resources_id | num | 待调查 | |
-| combo_send | | 待调查 | |
+| combo_send | | 连击详情信息 | |
 | comber_stay_time | num | 待调查 | |
-| combo_total_coin | num | 待调查 | |
+| combo_total_coin | num | 连击礼物总金额 | |
 | crit_prob | num | 待调查 | |
 | demarcation | num | 待调查 | |
 | discount_price | num | 待调查 | |
@@ -922,22 +922,22 @@ data字段
 | giftType | num | 待调查 | |
 | gold | number | 待调查 | |
 | guard_level | num | 待调查 | |
-| is_first | bool | 待调查 | |
+| is_first | bool | 是否首次 | 什么意义上的首次？待调查 |
 | is_join_receiver | bool | 待调查 | |
-| is_naming | bool | 待调查 | |
+| is_naming | bool | 是否冠名 | |
 | is_special_batch | num | 待调查 | |
 | magnification | num | 待调查 | |
 | medal_info | obj | 礼物投喂者粉丝奖牌信息 | |
 | name_color | str | 待调查 | |
 | num | number | 该次投喂的礼物数量 | |
 | original_gift_name | str | 待调查 | |
-| price | num | 待调查 | |
+| price | num | 金额 | |
 | rcost | num | 待调查 | |
 | receive_user_info | obj | 礼物接收者信息，一般是主播 | |
 | remain | num | 待调查 | |
 | rnd | num | 礼物发送时的时间戳，以及后面9位未知数字 | |
 | send_master | | 待调查 | |
-| silver | num | 待调查 | |
+| silver | num | 银瓜子数 | |
 | super | num | 待调查 | |
 | super_batch_gift_num | num | 待调查 | |
 | super_gift_num | num | 待调查 | |
@@ -957,9 +957,9 @@ batch_combo_send字段
 | ---- | -------- | ------ | --------- |
 | action | str | 礼物操作，一般为"投喂" | |
 | batch_combo_id | str | 待调查 | |
-| batch_combo_num | num | 待调查 | |
+| batch_combo_num | num | 连击数 | |
 | blind_gift | | 待调查 | |
-| gift_id | num | 待调查 | |
+| gift_id | num | 礼物id | |
 | gift_name | str | 投喂的礼物名称 | 待调查 |
 | gift_num | num | 投喂礼物数量 | 待调查 |
 | send_master | | 待调查 | |
