@@ -746,7 +746,7 @@ data字段
 | background_price_color | str | 待调查            | |
 | color_point | num | 待调查            | |
 | dmscore | num | 待调查            | |
-| end_time | num | 待调查            | |
+| end_time | num | sc结束时间            | |
 | gift | obj | 礼物信息           | |
 | id | num | 待调查            | |
 | is_ranked | num | 待调查            | |
@@ -757,7 +757,7 @@ data字段
 | message_trans | str | 机翻sc内容  | |
 | price | num | sc金额           | |
 | rate | num | 待调查            | |
-| start_time | num | 待调查            | |
+| start_time | num | sc开始时间            | |
 | time | num | sc持续时间         | |
 | token | num | 待调查            | |
 | trans_mark | num | 待调查            | |
@@ -806,7 +806,7 @@ user_info字段
 | name_color | str | 待调查   |  |
 | title | str | 待调查   |  |
 | uname | str | 用户名称  |  |
-| user_level | num | 待调查   |  |
+| user_level | num | 用户等级（1-6）   |  |
 
 <details>
 
