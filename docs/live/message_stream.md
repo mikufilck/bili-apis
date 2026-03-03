@@ -1145,21 +1145,21 @@ data字段
 | batch_combo_num | num | 连击礼物数量 | |
 | combo_id | str | 待调查 | |
 | combo_num | str | 连击礼物数量 | |
-| combo_total_coin | num | 待调查 | |
+| combo_total_coin | num | 连击礼物总金额 | |
 | dmscore | num | 待调查 | |
 | gift_id | num | 待调查 | |
 | gift_name | str | 连击礼物的名称 | |
 | gift_num | num | 0 | |
 | is_join_receiver | bool | 待调查 | |
-| is_naming | bool | 待调查 | |
-| is_show | num | 待调查 | |
+| is_naming | bool | 是否冠名 | |
+| is_show | num | 是否显示 | 1为显示 |
 | medal_info | obj | 礼物投喂者的粉丝勋章信息 | |
 | name_color | str | 待调查 | |
 | r_uname | str | 主播的名称 | |
 | receive_user_info | obj | 主播的UID和名称 | |
 | ruid | num | 主播的UID | |
 | send_master | | 待调查 | |
-| total_num | num | 连击礼物数量 | |
+| total_num | num | 连击礼物总数量 | |
 | uid | num | 礼物投喂者的UID | |
 | uname | str | 礼物投喂者的名称 | |
 
