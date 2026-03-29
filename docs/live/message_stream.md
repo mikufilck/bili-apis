@@ -262,6 +262,7 @@ json格式
 - [进场或关注消息](#进场或关注消息)
 - [送礼](#送礼)
 - [礼物星球点亮](#礼物星球点亮)
+- [通用系统广播弹幕](#通用系统广播弹幕)
 - [礼物连击](#礼物连击)
 - [通知消息](#通知消息)
 - [主播准备中](#主播准备中)
@@ -1039,32 +1040,132 @@ receive_user_info字段
 ```
 </details>
 
-#### 礼物星球点亮
+#### 礼物星球进度变动
 
 json格式
 
 | 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd | str | "GIFT_STAR_PROCESS" | 主播的礼物星球其一点亮之后，则内容为"GIFT_STAR_PROCESS" |
-| data | obj | 消息文本 |  |
+| cmd  | str | "WIDGET_GIFT_STAR_PROCESS" | 礼物星球进度变动事件。 |
+| data | obj | 挂件任务详情 | 包含任务起止时间及所需收集的礼物进度列表。 |
 
 data字段
 
-| 字段 |    类型   |  内容  |    备注    |
-| ---- | -------- | ------ | --------- |
-| status | num | 待调查 | |
-| tip | str | 点亮礼物星球的消息文本 | |
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| start_date | num | 任务开始日期 | 格式为 YYYYMMDD（如 `20260330`）。 |
+| process_list | array | 收集进度列表 | **核心数据，包含部分需要收集的礼物及其进度。** |
+| finished | bool | 是否已完成 | 当前活动任务是否全部达标。 |
+| ddl_timestamp | num | 截止时间戳 | 任务结束的 Unix 时间戳（秒）。 |
+| version | num | 版本戳 | 毫秒级时间戳。 |
+| reward_gift | num | 奖励礼物ID | 完成任务后触发或奖励的礼物 ID。 |
+| reward_gift_img | str | 奖励礼物图片 | |
+| reward_gift_name | str | 奖励礼物名称 | |
+| level_info | obj/null | 等级信息 | 待调查。 |
+
+data.process_list数组 (进度列表)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| gift_id | num | 需要收集的礼物ID | |
+| gift_img | str | 礼物图片URL | |
+| gift_name | str | 礼物名称 | 不知道为什么全都是“礼物星球”，待调查。 |
+| completed_num | num | 已完成数量 | 当前已收集到该礼物的数量。 |
+| target_num | num | 目标收集数量 | 该项礼物需要收集的总数。 |
 
 <details>
 <summary>查看消息示例：</summary>
 
 ```json
 {
-    "cmd": "GIFT_STAR_PROCESS",
-    "data": {
-        "status": 1,
-        "tip": "情书已点亮"
-    }
+  "cmd": "WIDGET_GIFT_STAR_PROCESS",
+  "data": {
+    "start_date": 20260330,
+    "process_list": [
+      {
+        "gift_id": 35432,
+        "gift_img": "https://s1.hdslb.com/bfs/live/d927e689c3f33642e5283fc44469794eef017d94.png",
+        "gift_name": "礼物星球",
+        "completed_num": 0,
+        "target_num": 10
+      },
+      {
+        "gift_id": 35520,
+        "gift_img": "https://s1.hdslb.com/bfs/live/8c883690aa927c629da461f793bcf01c98143d0d.png",
+        "gift_name": "礼物星球",
+        "completed_num": 0,
+        "target_num": 10
+      },
+      {
+        "gift_id": 35502,
+        "gift_img": "https://s1.hdslb.com/bfs/live/f307cb4f29be9f13b6610a8ebbdd8acffa068ba9.png",
+        "gift_name": "礼物星球",
+        "completed_num": 0,
+        "target_num": 1
+      }
+    ],
+    "finished": false,
+    "ddl_timestamp": 1775404800,
+    "version": 1774805204830,
+    "reward_gift": 0,
+    "reward_gift_img": "",
+    "reward_gift_name": "",
+    "level_info": null
+  }
+}
+```
+</details>
+
+#### 通用系统广播弹幕
+
+B站的通用系统通知弹幕。当观众触发特定高光成就（如点亮礼物星球、开通特殊守护等）时下发。服务器通常会为适配不同终端的 UI（如浅色/深色模式、Web/App端），下发多条带有不同 `terminals` 和颜色配置的同类消息。
+
+json格式
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| cmd  | str | "COMMON_NOTICE_DANMAKU" | 通用系统通知弹幕。 |
+| data | obj | 通知详情 | 包含富文本分段和目标终端数组。 |
+
+data字段
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| content_segments | array | 富文本内容段 | **核心数据，包含具体的广播文本和颜色配置。** |
+| dmscore | num | 互动积分 | |
+| terminals | array | 目标终端编号 | 标识该配置适用于哪些客户端。例如 `[1, 2, 3]` 通常为 Web 端，`[4, 5]` 通常为移动端。 |
+
+data.content_segments数组 (富文本内容段)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| font_color | str | 默认字体颜色 | Hex 颜色值（如 `"#FFFFFF"`）。 |
+| font_color_dark | str | 深色模式字体颜色 | Hex 颜色值（如 `"#a2a7ae"`）。 |
+| highlight_font_color | str | 高亮字体颜色 | Hex 颜色值（如 `"#FFB027"`）。 |
+| highlight_font_color_dark | str | 深色模式高亮颜色 | Hex 颜色值。 |
+| text | str | 广播文本内容 | **需要高亮的词汇通常包裹在 `<%` 和 `%>` 中**。例如 `"<%小花花%> 被点亮啦！恭喜 <%mikufilck%> 成为星球守护者！"`。 |
+| type | num | 文本类型 | 例如 `1`。 |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "COMMON_NOTICE_DANMAKU",
+  "data": {
+    "content_segments": [
+      {
+        "font_color": "#FFFFFF",
+        "font_color_dark": "#FFFFFF",
+        "highlight_font_color": "#FFB027",
+        "highlight_font_color_dark": "#FFB027",
+        "text": "<%小花花%> 被点亮啦！恭喜 <%mikufilck%> 成为星球守护者！",
+        "type": 1
+      }
+    ],
+    "dmscore": 1008,
+    "terminals": [1, 2, 3]
+  }
 }
 ```
 </details>
