@@ -1997,8 +1997,8 @@ json格式
 
 | 字段 | 类型 |   内容  |    备注   |
 | ---- | ---- | ------ | --------- |
-| cmd  | str | "ENTRY_EFFECT" | 有进场特效的用户进入直播间，则内容是"ENTRY_EFFECT" |
-| data | obj | 进场用户、进场特效信息 | |
+| cmd  | str | "ENTRY_EFFECT" | 带有进场特效的用户（如舰长、高等级用户）进入直播间时触发。 |
+| data | obj | 进场用户、进场特效信息 | 包含了极具价值的 `uinfo` 底层结构。 |
 
 data字段
 
@@ -2006,11 +2006,11 @@ data字段
 | ---- | ---- | ------ | --------- |
 | id | num | 待调查 | |
 | uid | num | 进场用户的UID | |
-| target_id | num | 主播的UID？ | |
+| target_id | num | 主播的UID | |
 | mock_effect | num | 待调查 | |
 | face | str | 进场用户的头像URL | |
 | privilege_type | num | 待调查 | |
-| copy_writing | str | 进场欢迎文本 | |
+| copy_writing | str | 进场欢迎文本 | 注意：长名字可能会在此字段被截断并加上省略号。 |
 | copy_color | str | 进场欢迎文本的十六进制颜色值 | |
 | highlight_color | str | 待调查 | |
 | priority | num | 待调查 | |
@@ -2021,7 +2021,7 @@ data字段
 | web_effect_close | num | 待调查 | |
 | web_close_time | num | 待调查 | |
 | business | num | 待调查 | |
-| copy_writing_v2 | str | 进场欢迎文本的复制？ | |
+| copy_writing_v2 | str | 进场欢迎文本的完整版 | 通常包含完整的未经截断的用户名。 |
 | icon_list | array | 待调查 | |
 | max_delay_time | num | 待调查 | |
 | trigger_time | num | 触发的Unix时间戳，以及后面9位未知数字 | |
@@ -2031,43 +2031,163 @@ data字段
 | web_dynamic_url_webp | str | 待调查 | |
 | web_dynamic_url_apng | str | 待调查 | |
 | mobile_dynamic_url_webp | str | 待调查 | |
+| wealthy_info | obj | 用户财富等级信息 | |
+| new_style | num | 待调查 | |
+| is_mystery | bool | 是否神秘人 | |
+| uinfo | obj | 进场用户的详细底层信息 | 核心数据结构，包含了精准的用户名和粉丝牌。 |
+| full_cartoon_id | num | 待调查 | |
+| priority_level | num | 待调查 | |
+| wealth_style_info | obj | 财富等级特效样式 | |
+
+data.uinfo字段 (核心用户信息)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| uid | num | 用户UID | |
+| base | obj | 基础信息 | 包含准确的昵称和头像。 |
+| medal | obj | 粉丝勋章信息 | 用户当前佩戴的粉丝牌数据。 |
+| wealth | obj | 全站财富信息 | |
+| title | str | 待调查 | 可能为null |
+| guard | obj | 大航海(舰队)信息 | |
+| uhead_frame | obj | 头像框信息 | 可能为null |
+| guard_leader | obj | 待调查 | 可能为null |
+
+data.uinfo.base字段
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| name | str | 进场用户的完整昵称 | 建议直接提取此字段，避免截断问题。 |
+| face | str | 头像URL | |
+| name_color | num | 名字颜色 | |
+| is_mystery | bool | 是否隐藏身份 | |
+| risk_ctrl_info | obj | 风控相关信息 | 可能为null |
+| origin_info | obj | 待调查 | 可能为null |
+| official_info | obj | 官方认证信息 | 可能为null |
+| name_color_str | str | 名字颜色字符串 | |
+
+data.uinfo.medal字段 (粉丝勋章)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| name | str | 粉丝勋章名称 | |
+| level | num | 粉丝勋章等级 | |
+| color_start | num | 背景渐变起始色 | |
+| color_end | num | 背景渐变结束色 | |
+| color_border | num | 边框颜色 | |
+| color | num | 基础颜色 | |
+| id | num | 粉丝牌ID | |
+| typ | num | 待调查 | |
+| is_light | num | 粉丝牌是否点亮 | 1点亮<br/>0熄灭 |
+| ruid | num | 发放此粉丝牌的主播UID | |
+| guard_level | num | 对应的大航海等级 | 0无<br/>1总督<br/>2提督<br/>3舰长 |
+| score | num | 亲密度/积分 | |
+| v2_medal_color_text | str | 粉丝牌文字颜色(V2) | Hex格式，例如 "#FFFFFF" |
+
+data.uinfo.guard字段 (大航海/舰队)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| level | num | 大航海等级 | 0无<br/>1总督<br/>2提督<br/>3舰长 |
+| expired_str | str | 过期时间 | |
 
 <details>
 <summary>查看消息示例：</summary>
   
 ```json
 {
-    "cmd": "ENTRY_EFFECT",
-    "data": {
-        "id": 4,
-        "uid": 489893482,
-        "target_id": 27717502,
-        "mock_effect": 0,
-        "face": "https://i0.hdslb.com/bfs/face/member/noface.jpg",
-        "privilege_type": 3,
-        "copy_writing": "欢迎舰长 <%天使雨晰%> 进入直播间",
-        "copy_color": "#ffffff",
-        "highlight_color": "#E6FF00",
-        "priority": 1,
-        "basemap_url": "https://i0.hdslb.com/bfs/live/mlive/11a6e8eb061c3e715d0a6a2ac0ddea2faa15c15e.png",
-        "show_avatar": 1,
-        "effective_time": 2,
-        "web_basemap_url": "https://i0.hdslb.com/bfs/live/mlive/11a6e8eb061c3e715d0a6a2ac0ddea2faa15c15e.png",
-        "web_effective_time": 2,
-        "web_effect_close": 0,
-        "web_close_time": 0,
-        "business": 1,
-        "copy_writing_v2": "欢迎舰长 <%天使雨晰%> 进入直播间",
-        "icon_list": [],
-        "max_delay_time": 7,
-        "trigger_time": 1673625604373633300,
-        "identities": 6,
-        "effect_silent_time": 0,
-        "effective_time_new": 0,
-        "web_dynamic_url_webp": "",
-        "web_dynamic_url_apng": "",
-        "mobile_dynamic_url_webp": ""
+  "cmd": "ENTRY_EFFECT",
+  "data": {
+    "id": 382,
+    "uid": 26928797,
+    "target_id": 3546384651258599,
+    "mock_effect": 0,
+    "face": "https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg",
+    "privilege_type": 0,
+    "copy_writing": "<%mikufil...%> 来了",
+    "copy_color": "#F7F7F7",
+    "highlight_color": "#FFFFFF",
+    "priority": 1,
+    "basemap_url": "",
+    "show_avatar": 0,
+    "effective_time": 0,
+    "web_basemap_url": "https://i0.hdslb.com/bfs/live/mlive/5b14d1fc398f891c01f18e54a3384e75914d9333.png",
+    "web_effective_time": 4,
+    "web_effect_close": 1,
+    "web_close_time": 900,
+    "business": 6,
+    "copy_writing_v2": "<%mikufilck%> 来了",
+    "icon_list": [],
+    "max_delay_time": 7,
+    "trigger_time": 1774791005106451572,
+    "identities": 1,
+    "effect_silent_time": 0,
+    "effective_time_new": 0,
+    "web_dynamic_url_webp": "",
+    "web_dynamic_url_apng": "",
+    "mobile_dynamic_url_webp": "",
+    "wealthy_info": {
+      "uid": 0,
+      "level": 32,
+      "level_total_score": 0,
+      "cur_score": 0,
+      "upgrade_need_score": 0,
+      "status": 0,
+      "dm_icon_key": ""
+    },
+    "new_style": 1,
+    "is_mystery": false,
+    "uinfo": {
+      "uid": 26928797,
+      "base": {
+        "name": "mikufilck",
+        "face": "https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg",
+        "name_color": 0,
+        "is_mystery": false,
+        "risk_ctrl_info": null,
+        "origin_info": null,
+        "official_info": null,
+        "name_color_str": ""
+      },
+      "medal": {
+        "name": "做猫的",
+        "level": 21,
+        "color_start": 1725515,
+        "color_end": 5414290,
+        "color_border": 1725515,
+        "color": 1725515,
+        "id": 1228772,
+        "typ": 0,
+        "is_light": 1,
+        "ruid": 3546384651258599,
+        "guard_level": 0,
+        "score": 2498,
+        "guard_icon": "",
+        "honor_icon": "",
+        "v2_medal_color_start": "#3FB4F699",
+        "v2_medal_color_end": "#3FB4F699",
+        "v2_medal_color_border": "#3FB4F699",
+        "v2_medal_color_text": "#FFFFFF",
+        "v2_medal_color_level": "#3FB4F6E6",
+        "user_receive_count": 0
+      },
+      "wealth": {
+        "level": 32,
+        "dm_icon_key": ""
+      },
+      "title": null,
+      "guard": {
+        "level": 0,
+        "expired_str": ""
+      },
+      "uhead_frame": null,
+      "guard_leader": null
+    },
+    "full_cartoon_id": 1800,
+    "priority_level": 0,
+    "wealth_style_info": {
+      "url": "https://i0.hdslb.com/bfs/live/8dac191a14bdef6bb28cd2465b9f58bc3719e072.png"
     }
+  }
 }
 ```
 
