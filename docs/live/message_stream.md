@@ -270,6 +270,10 @@ json格式
 - [直播间高能榜](#直播间高能榜)
 - [直播间高能用户数量](#直播间高能用户数量)
 - [用户到达直播间高能榜前三名的消息](#用户到达直播间高能榜前三名的消息)
+- [PK 礼物积分同步](#PK礼物积分同步)
+- [PK 礼物积分同步V2](#PK礼物积分同步V2)
+- [PK 战况与 MVP 实时更新](#PK战况与MVP实时更新)
+- [PK 全局状态](#PK全局状态)
 - [直播间用户点赞](#直播间用户点赞)
 - [直播间点赞数](#直播间点赞数)
 - [直播间发红包弹幕](#直播间发红包弹幕)
@@ -1528,6 +1532,643 @@ data字段
 }
 ```
 
+</details>
+
+#### PK礼物积分同步
+
+在直播间进行连麦或 PK 状态时有人送礼，服务器会下发此包。V1 版本不仅包含实时的 PK 积分同步，还包含了极其详尽的前端 UI 渲染指令（如 WebRTC 的推流分辨率、播放器切割网格坐标等）。
+
+json格式
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| cmd  | str | "UNIVERSAL_EVENT_GIFT" | 连麦状态下的礼物积分及 UI 布局全局同步事件。 |
+| data | obj | 连麦状态完整详情 | 包含成员信息、积分信息与重度 UI 渲染数据。 |
+
+data字段
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| room_id | num | 当前直播间ID | |
+| anchor_uid | num | 当前主播UID | |
+| info | obj | 连麦会话的核心数据大包 | 包含所有连麦细节。 |
+
+data.info字段 (连麦会话详情)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| biz_session_id | str | 连麦会话ID | 唯一标识当前这局连麦/PK的ID。 |
+| interact_channel_id | str | 互动频道ID | |
+| interact_mode | obj | 互动模式配置 | 包含邀请、连麦超时等参数。 |
+| interact_template | obj | UI 互动模板引擎 | **核心渲染配置，包含客户端播放器分割布局。** |
+| interact_connect_type | num | 互动连接类型 | 待调查，通常为 `0`。 |
+| interact_max_users | num | 最大互动人数 | 例如 `9` 代表最多支持 9 人同屏连麦。 |
+| members | array | 连麦成员列表 | **包含参与连麦的所有主播的信息（含对手）。** |
+| version | num | 版本戳 | 通常为精确到毫秒的时间戳。 |
+| session_status | num | 会话状态 | `1` 代表正在进行中。 |
+| multi_conn_info | obj | 多人连接详情 | **核心数据：包含实时的 PK 分数。** |
+| business_label | str | 业务标签 | 通常为 `"universal_multi_conn"` (通用多人连麦)。 |
+| invoking_time | num | 调用次数/时间 | |
+| members_version | num | 成员版本号 | |
+| room_status | num | 房间状态 | `1` 代表正常。 |
+| system_time_unix | num | 系统当前时间戳 | Unix时间戳（秒）。 |
+| room_owner | num | 房主UID | 发起本次连麦/PK的房主UID。 |
+| session_start_at | str | 会话开始时间 | 字符串格式的时间。 |
+| session_start_at_ts | num | 会话开始时间戳 | |
+| room_start_at | str | 房间开始时间 | 字符串格式的时间。 |
+| room_start_at_ts | num | 房间开始时间戳 | |
+| trace_id | str | 追踪ID | 用于后端链路追踪。 |
+
+data.info.interact_mode字段 (互动规则配置)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| interact_mode_type | num | 模式类型 | |
+| join_types | array | 允许加入的类型 | 如 `[1, 2]`。 |
+| invite_timeout | num | 邀请超时时间 | 单位秒（如 `30`）。 |
+| apply_timeout | num | 申请超时时间 | 单位秒（如 `20`）。 |
+| position_mode | num | 占位模式 | |
+
+data.info.interact_template字段 (UI 渲染引擎配置)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| template_id | str | 模板ID | 如 `"multi_conn_grid"`。 |
+| is_variable_layout | bool | 是否可变布局 | |
+| layout_list | array/null | 布局列表 | |
+| show_interact_ui | bool | 是否显示互动UI | |
+| layout_id | str | 当前布局ID | 如 `"left1_right1"` (左右分屏)。 |
+| layout_data | obj | 布局详细坐标与参数 | 控制 Web/App 端的播放器切割。 |
+
+data.info.interact_template.layout_data字段 (播放器切割参数)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| width | num | 网格总宽 | 例如 `10`。 |
+| height | num | 网格总高 | 例如 `8`。 |
+| default_cell | obj | 默认网格单元属性 | 包含默认的坐标、层级和各端字体大小配置。 |
+| cells | array | 各画面的具体网格参数 | 根据成员人数分配画面的长宽坐标 `x`, `y`。 |
+| rtc_resolution | obj | WebRTC 视频流分辨率 | 包含 `horizontal_width`, `horizontal_height`, 以及初始/最大/最小码率 (`code_rate`) 等音视频底层推流参数。 |
+| best_area_show_pos | num | 最佳区域展示位 | 通常为 `-1`。 |
+
+data.info.members数组 (连麦成员详情)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| uid | num | 主播UID | |
+| uname | str | 主播昵称 | |
+| face | str | 主播头像 | |
+| position | num | 站位 | `0` 为左侧（通常为本直播间主播），`1` 为右侧（通常为对手）。 |
+| join_time | num | 加入时间戳 | Unix时间戳（秒）。 |
+| link_id | str | 连麦链接ID | |
+| gender | num | 性别 | `0`女，`1`男，`-1`保密。 |
+| room_id | num | 主播直播间长号 | |
+
+data.info.multi_conn_info字段 (多人连接与积分)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| scores | array | **积分列表** | **存放各成员的实时 PK 分数**。 |
+| room_owner | num | 房主UID | |
+| show_score | num | 是否展示分数 | `1` 为展示。 |
+
+data.info.multi_conn_info.scores数组 (实时积分表)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| uid | num | 对应主播的UID | |
+| price | num | 后端真实积分 | 实际的礼物价值积分（通常为展示分数的 100 倍）。 |
+| price_text | str | 前端展示积分 | 实际在 PK 条上显示的字符串（如 `"36"`）。 |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "UNIVERSAL_EVENT_GIFT",
+  "data": {
+    "room_id": 1950852193,
+    "anchor_uid": 3546607121336514,
+    "info": {
+      "biz_session_id": "17748003749063546890274605289",
+      "interact_channel_id": "4721463177254912",
+      "interact_mode": {
+        "interact_mode_type": 0,
+        "join_types": [1, 2],
+        "invite_timeout": 30,
+        "apply_timeout": 20,
+        "position_mode": 0
+      },
+      "interact_template": {
+        "template_id": "multi_conn_grid",
+        "is_variable_layout": true,
+        "layout_list": null,
+        "show_interact_ui": false,
+        "layout_id": "left1_right1",
+        "layout_data": {
+          "width": 10,
+          "height": 8,
+          "default_cell": {
+            "x": 0, "y": 0, "width": 5, "height": 8,
+            "z_index": 0, "position": 0, "default_open": 1,
+            "mobile_font_size": 12, "mobile_avatar_size": 64,
+            "pc_web_font_size": 14, "pc_web_avatar_size": 112,
+            "can_zoom": 0
+          },
+          "cells": [
+            { "x": 0, "y": 0, "width": 0, "height": 0, "position": 0 },
+            { "x": 5, "y": 0, "width": 0, "height": 0, "position": 1 }
+          ],
+          "rtc_resolution": {
+            "vertical_width": 720, "vertical_height": 1152,
+            "horizontal_width": 1000, "horizontal_height": 800,
+            "code_rate_init": 1500, "code_rate_min": 800, "code_rate_max": 2000
+          },
+          "best_area_show_pos": -1
+        }
+      },
+      "interact_connect_type": 0,
+      "interact_max_users": 9,
+      "members": [
+        {
+          "uid": 3546607121336514,
+          "uname": "枳念念",
+          "face": "[https://i0.hdslb.com/bfs/face/f45351c32455b2c7246a07d206acc51f4a8671ff.jpg](https://i0.hdslb.com/bfs/face/f45351c32455b2c7246a07d206acc51f4a8671ff.jpg)",
+          "position": 0,
+          "join_time": 1774800379,
+          "link_id": "68942631",
+          "gender": 0,
+          "room_id": 1950852193
+        },
+        {
+          "uid": 3546890274605289,
+          "uname": "阿狸不吃梨lili",
+          "face": "[https://i0.hdslb.com/bfs/face/b87c61ef3755bf2661ade8f9865bc9e09f572d18.jpg](https://i0.hdslb.com/bfs/face/b87c61ef3755bf2661ade8f9865bc9e09f572d18.jpg)",
+          "position": 1,
+          "join_time": 1774800379,
+          "link_id": "68942630",
+          "gender": -1,
+          "room_id": 1940980374
+        }
+      ],
+      "version": 1774800505417,
+      "session_status": 1,
+      "multi_conn_info": {
+        "scores": [
+          { "uid": 3546607121336514, "price": 100, "price_text": "1" },
+          { "uid": 3546890274605289, "price": 0, "price_text": "0" }
+        ],
+        "room_owner": 3546890274605289,
+        "show_score": 1
+      },
+      "business_label": "universal_multi_conn",
+      "invoking_time": 1,
+      "members_version": 3149586401,
+      "room_status": 1,
+      "system_time_unix": 1774800505,
+      "room_owner": 3546890274605289,
+      "session_start_at": "",
+      "session_start_at_ts": 0,
+      "room_start_at": "",
+      "room_start_at_ts": 0,
+      "trace_id": ""
+    }
+  }
+}
+```
+</details>
+
+#### PK礼物积分同步V2
+
+当主播处于连麦或 PK 状态时，观众送礼会触发积分变动，服务器会下发此包以同步最新的分数和成员状态。V2 版本去除了冗余的 UI 布局数据，更加轻量化。但是现版本和 V1 是同时使用的
+
+json格式
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| cmd  | str | "UNIVERSAL_EVENT_GIFT_V2" | 连麦状态下的礼物积分全局同步事件。 |
+| data | obj | 连麦状态详情 | 包含成员信息、积分信息与基础 UI 标识。 |
+
+data字段
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| biz_session_id | str | 连麦会话ID | 唯一标识当前这局连麦/PK的ID。 |
+| interact_channel_id | str | 互动频道ID | |
+| interact_template | obj | UI 互动模板 | 包含基础的排版标识。 |
+| members | array | 连麦成员列表 | **包含参与连麦的双方主播信息及实时积分。** |
+| stream_control | obj/null | 流控信息 | 待调查 |
+| version | num | 版本戳 | 通常为时间戳，用于前端按序处理包。 |
+| session_status | num | 会话状态 | `1` 代表正在进行中。 |
+| business_label | str | 业务标签 | 通常为 `"universal_multi_conn"` (通用多人连麦)。 |
+| invoking_time | num | 调用次数/时间 | 待调查 |
+| members_version | num | 成员版本号 | |
+| room_status | num | 房间状态 | `1` 代表正常。 |
+| system_time_unix | num | 系统当前时间戳 | Unix时间戳（秒）。 |
+| room_owner | num | 房主UID | 发起本次连麦/PK的房主。 |
+| session_start_at | str | 会话开始时间 | 格式如 `"2026-03-30 00:06:19"`。 |
+| session_start_at_ts | num | 会话开始时间戳 | 相对或绝对时间戳标记。 |
+| room_start_at | str | 房间开始时间 | 格式如 `"2026-03-30 00:06:19"`。 |
+| room_start_at_ts | num | 房间开始时间戳 | |
+| trace_id | str | 追踪ID | 用于后端链路追踪的 UUID。 |
+| biz_extra_data | obj | 业务附加数据(全局) | 包含全局显示配置。 |
+| channel_users | array | 频道用户UID列表 | 参与连麦的所有主播 UID 数组。 |
+
+data.interact_template字段
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| template_id | str | 模板ID | 如 `"multi_conn_grid"`。 |
+| show_interact_ui | bool | 是否显示互动UI | |
+| layout_id | str | 布局ID | 如 `"left1_right1"` 代表左右分屏。 |
+| layout_version | num | 布局版本号 | |
+
+data.members数组 (连麦成员详情)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| uid | num | 主播UID | |
+| uname | str | 主播真实昵称 | |
+| face | str | 主播头像URL | |
+| position | num | 站位 | `0` 为左侧（通常为本直播间主播），`1` 为右侧（对手）。 |
+| join_time | num | 加入时间戳 | |
+| link_id | str | 连麦链接ID | |
+| gender | num | 性别 | `0`女，`1`男，`-1`保密。 |
+| room_id | num | 主播直播间长号 | |
+| fans_num | num | 粉丝数 | 在此包中通常为 `0`，待核实。 |
+| display_name | str | 展示名称 | 本房主播通常显示为 `"本房主播"`，对手显示真实昵称。 |
+| biz_extra_data | obj | 业务附加数据(个人) | **内含个人的实时 PK 积分**。 |
+| join_time_ts | num | 加入时间戳(备用) | |
+
+data.members.biz_extra_data.multi_conn字段 (个人实时积分)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| price | num | 后端真实积分 | 实际的礼物价值积分（通常为展示分数的 100 倍）。 |
+| price_text | str | 前端展示积分 | 实际在 PK 条上显示的字符串（如 `"1"`）。 |
+
+data.biz_extra_data.multi_conn字段 (全局附加配置)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| show_score | num | 是否展示分数 | `1` 为展示。 |
+| support_full_zoom | num | 支持全屏放大 | 待调查。 |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "UNIVERSAL_EVENT_GIFT_V2",
+  "data": {
+    "biz_session_id": "17748003749063546890274605289",
+    "interact_channel_id": "4721463177254912",
+    "interact_template": {
+      "template_id": "multi_conn_grid",
+      "show_interact_ui": false,
+      "layout_id": "left1_right1",
+      "layout_version": 14
+    },
+    "members": [
+      {
+        "uid": 3546607121336514,
+        "uname": "枳念念",
+        "face": "[https://i0.hdslb.com/bfs/face/f45351c32455b2c7246a07d206acc51f4a8671ff.jpg](https://i0.hdslb.com/bfs/face/f45351c32455b2c7246a07d206acc51f4a8671ff.jpg)",
+        "position": 0,
+        "join_time": 1774800379,
+        "link_id": "68942631",
+        "gender": 0,
+        "room_id": 1950852193,
+        "fans_num": 0,
+        "display_name": "本房主播",
+        "biz_extra_data": {
+          "multi_conn": {
+            "price": 100,
+            "price_text": "1"
+          }
+        },
+        "join_time_ts": 0
+      }
+    ],
+    "stream_control": null,
+    "version": 1774800505415,
+    "session_status": 1,
+    "business_label": "universal_multi_conn",
+    "invoking_time": 2,
+    "members_version": 3358334162,
+    "room_status": 1,
+    "system_time_unix": 1774800505,
+    "room_owner": 3546890274605289,
+    "session_start_at": "2026-03-30 00:06:19",
+    "session_start_at_ts": 126,
+    "room_start_at": "2026-03-30 00:06:19",
+    "room_start_at_ts": 126,
+    "trace_id": "531f5a86d6aec3ba09e7b1f91669c94e",
+    "biz_extra_data": {
+      "multi_conn": {
+        "show_score": 1,
+        "support_full_zoom": 2
+      }
+    },
+    "channel_users": [
+      3546607121336514,
+      3546890274605289
+    ]
+  }
+}
+```
+</details>
+
+#### PK战况与MVP实时更新
+
+在 PK 过程中，用于高频同步双方的总票数以及贡献榜单（MVP 大哥榜）。通常包含发起方 (`init_info`) 和匹配方 (`match_info`) 两个阵营的实时战况。
+
+json格式
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| cmd  | str | "PK_BATTLE_PROCESS_NEW" | PK 进程实时战报。 |
+| data | obj | 战况详细数据 | 包含双方阵营的分数和助攻榜。 |
+| msg_id | str | 消息序列号 | |
+| p_is_ack | bool | 是否需要回执 | |
+| p_msg_type | num | 消息协议类型 | |
+| pk_id | num | PK 唯一标识符 | 对应本局 PK 的全局 ID。 |
+| pk_status | num | PK 状态 | `201` 通常代表进行中。 |
+| send_time | num | 发送时间戳 | 毫秒级 Unix 时间戳。 |
+| template_id | str | 模板ID | 如 `"multi_conn_grid"`。 |
+| timestamp | num | 时间戳 | 秒级 Unix 时间戳。 |
+| trace_id | str | 追踪ID | 用于后端链路追踪的 UUID。 |
+
+data字段
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| battle_type | num | 战斗类型 | 待调查（例如 `6`）。 |
+| init_info | obj | 发起方战况 | PK 发起方主播的实时阵营数据。 |
+| match_info | obj | 匹配方战况 | PK 接受方（匹配方）主播的实时阵营数据。 |
+| trace_id | str | 追踪ID | 内部链路追踪。 |
+
+data.init_info / data.match_info 字段 (双方阵营战况结构相同)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| room_id | num | 该阵营的直播间长号 | 用于区分这是哪边主播的数据。 |
+| votes | num | 当前总票数 | 该阵营的实时 PK 总分。 |
+| best_uname | str | 贡献最高的用户名 | 当前的 MVP 大哥昵称。 |
+| assist_info | array/null | 助攻榜单 (MVP列表) | 包含贡献最高用户的详细数组，暂无贡献时为 `null`。 |
+| vision_desc | num | 视觉描述标识 | 待调查（例如 `0`）。 |
+
+assist_info 数组 (助攻大哥详细信息)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| rank | num | 排名 | 该用户在本次 PK 助攻榜的当前排名（如 `1` 代表榜一）。 |
+| uid | num | 用户UID | |
+| uname | str | 用户昵称 | |
+| face | str | 头像URL | |
+| is_mystery | bool | 是否神秘人 | |
+| award_content | str | 奖励内容 | 待调查。 |
+| uinfo | obj | **大哥的详细底层信息** | **结构与 `ENTRY_EFFECT` 中的 `uinfo` 完全一致，包含精确的粉丝牌、财富等级等数据。** |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "PK_BATTLE_PROCESS_NEW",
+  "data": {
+    "battle_type": 6,
+    "init_info": {
+      "assist_info": null,
+      "best_uname": "",
+      "room_id": 1940980374,
+      "vision_desc": 0,
+      "votes": 0
+    },
+    "match_info": {
+      "assist_info": [
+        {
+          "award_content": "",
+          "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)",
+          "is_mystery": false,
+          "rank": 1,
+          "uid": 26928797,
+          "uinfo": {
+            "base": {
+              "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)",
+              "is_mystery": false,
+              "name": "mikufilck",
+              "name_color": 0,
+              "name_color_str": "",
+              "official_info": {
+                "desc": "",
+                "role": 0,
+                "title": "",
+                "type": -1
+              },
+              "origin_info": {
+                "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)",
+                "name": "mikufilck"
+              },
+              "risk_ctrl_info": null
+            },
+            "guard": null,
+            "guard_leader": null,
+            "medal": null,
+            "title": null,
+            "uhead_frame": null,
+            "uid": 26928797,
+            "wealth": null
+          },
+          "uname": "mikufilck"
+        }
+      ],
+      "best_uname": "mikufilck",
+      "room_id": 1950852193,
+      "vision_desc": 0,
+      "votes": 1
+    },
+    "trace_id": "531f5a86d6aec3ba09e7b1f91669c94e"
+  },
+  "msg_id": "90436141516382208:1000:1000",
+  "p_is_ack": true,
+  "p_msg_type": 1,
+  "pk_id": 393724504,
+  "pk_status": 201,
+  "send_time": 1774800505439,
+  "template_id": "multi_conn_grid",
+  "timestamp": 1774800505,
+  "trace_id": "531f5a86d6aec3ba09e7b1f91669c94e"
+}
+```
+</details>
+
+#### PK全局状态
+
+包含当前 PK 对局的所有元数据，权限极高。通常用于让前端校准倒计时时钟、确认惩罚阶段的时间点、拉取双方连胜记录以及加载特殊的 UI 颜色配置。
+
+json格式
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| cmd  | str | "PK_INFO" | PK 全局元数据大包。 |
+| data | obj | PK 详细信息 | 包含时间轴、双方阵营大全、玩法配置等。 |
+| msg_id | str | 消息序列号 | |
+| p_is_ack | bool | 是否需要回执 | |
+| p_msg_type | num | 消息协议类型 | |
+| send_time | num | 发送时间戳 | 毫秒级 Unix 时间戳。 |
+
+data字段
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| audience_open | bool | 观众面板是否开启 | |
+| invite_pk_resp | obj/null | 邀请回复信息 | |
+| members | array | 双方详细阵营数据 | **核心节点，包含双方的完整票数、连胜记录和助攻榜。** |
+| pk_basic | obj | PK 核心时间轴 | **核心节点，控制比赛的生死倒计时。** |
+| pk_group | obj/null | PK 群组信息 | |
+| pk_match_info | obj/null | PK 匹配信息 | |
+| pk_play | obj | 玩法与UI配置 | 包含前端渲染特效和弹幕颜色的设定。 |
+| mill_timestamp | num | 毫秒级时间戳 | |
+| timestamp | num | 秒级时间戳 | |
+
+data.members数组 (阵营详细数据)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| uid | num | 阵营主播UID | |
+| uname | str | 阵营主播昵称 | |
+| face | str | 阵营主播头像 | |
+| room_id | num | 阵营直播间号 | |
+| rank | num | 当前排名 | 如 `1` 为领先方，`2` 为落后方。 |
+| votes | num | 阵营总票数 | 真实 PK 分数。 |
+| votes_text | str | 展示票数 | |
+| golds | num | 获得金币/积分数 | |
+| assist_info | array | 助攻榜单 (MVP) | 包含贡献最高的大哥数组，格式与 `PK_BATTLE_PROCESS_NEW` 完全一致。 |
+| battle_level | obj | 战斗等级/挂件 | 包含 `icon` 和挂件交互的 H5 `url`。 |
+| date_streak | num | 连胜次数 | |
+| is_latest_streak | bool | 是否正在连胜 | |
+| is_winner | num | 获胜标志 | `0` 暂无结果，`1` 获胜。 |
+| status | num | 阵营状态 | |
+
+data.pk_basic字段 (赛事核心时间轴)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| pk_id | num | 本局 PK ID | 全局唯一标识符。 |
+| biz_session_id | str | 连麦会话ID | 匹配底层的连麦链路。 |
+| init_id | num | 发起方房间号 | |
+| init_uid | num | 发起方UID | |
+| start_time | num | PK 开始时间 | Unix 时间戳 (秒)。 |
+| end_time | num | PK 结束时间 | Unix 时间戳 (秒)，**前端用此计算比赛剩余倒计时。** |
+| punish_end_time | num | 惩罚结束时间 | Unix 时间戳 (秒)，**失败方接受惩罚的截止时间。** |
+| status | num | PK 状态码 | `201` 通常为进行中。 |
+| punish_text | str | 惩罚文本 | 通常为 `"惩罚"`。 |
+| main_page | str | H5活动页URL | |
+| season_id | num | 当前赛季ID | |
+| sprint_duration | num | 冲刺阶段时长 | |
+
+data.pk_play字段 (UI与特效配置)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| dm_conf | obj | 弹幕配置 | 包含 `bg_color` (背景色) 和 `font_color` (字体色)。 |
+| pre_duration | num | 准备时长 | 如 `10` 秒。 |
+| show_streak | bool | 是否显示连胜特效 | |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "PK_INFO",
+  "data": {
+    "audience_open": true,
+    "invite_pk_resp": null,
+    "members": [
+      {
+        "assist_info": [],
+        "battle_level": {
+          "icon": "[https://i0.hdslb.com/bfs/live/6d1f50f4684b4ddc03cbaafc1bd7ad4134503499.png](https://i0.hdslb.com/bfs/live/6d1f50f4684b4ddc03cbaafc1bd7ad4134503499.png)",
+          "url": "[https://live.bilibili.com/activity/live-activity-battle/index.html](https://live.bilibili.com/activity/live-activity-battle/index.html)?..."
+        },
+        "capsules": null,
+        "date_streak": 0,
+        "face": "[https://i0.hdslb.com/bfs/face/b87c61ef3755bf2661ade8f9865bc9e09f572d18.jpg](https://i0.hdslb.com/bfs/face/b87c61ef3755bf2661ade8f9865bc9e09f572d18.jpg)",
+        "golds": 0,
+        "is_winner": 0,
+        "rank": 2,
+        "room_id": 1940980374,
+        "status": 0,
+        "uid": 3546890274605289,
+        "uname": "阿狸不吃梨lili",
+        "votes": 0,
+        "votes_text": "0"
+      },
+      {
+        "assist_info": [
+          {
+            "award_content": "",
+            "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)",
+            "is_mystery": false,
+            "rank": 1,
+            "uid": 26928797,
+            "uname": "mikufilck"
+          }
+        ],
+        "battle_level": {
+          "icon": "[https://i0.hdslb.com/bfs/live/4022aa441d1bcdd2f98ac1f15767f5c8994be01d.png](https://i0.hdslb.com/bfs/live/4022aa441d1bcdd2f98ac1f15767f5c8994be01d.png)",
+          "url": "[https://live.bilibili.com/activity/live-activity-battle/index.html](https://live.bilibili.com/activity/live-activity-battle/index.html)?..."
+        },
+        "capsules": null,
+        "date_streak": 0,
+        "face": "[https://i0.hdslb.com/bfs/face/f45351c32455b2c7246a07d206acc51f4a8671ff.jpg](https://i0.hdslb.com/bfs/face/f45351c32455b2c7246a07d206acc51f4a8671ff.jpg)",
+        "golds": 100,
+        "is_winner": 0,
+        "rank": 1,
+        "room_id": 1950852193,
+        "status": 0,
+        "uid": 3546607121336514,
+        "uname": "枳念念",
+        "votes": 1,
+        "votes_text": "1"
+      }
+    ],
+    "mill_timestamp": 1774800505423,
+    "pk_basic": {
+      "biz_session_id": "17748003749063546890274605289",
+      "end_time": 1774800690,
+      "init_id": 1940980374,
+      "init_uid": 3546890274605289,
+      "main_page": "[https://live.bilibili.com/activity/live-activity-battle/index.html](https://live.bilibili.com/activity/live-activity-battle/index.html)?...",
+      "muti_pk_type": 4,
+      "pk_id": 393724504,
+      "punish_end_time": 1774800750,
+      "punish_text": "惩罚",
+      "season_id": 95,
+      "sprint_duration": 10,
+      "start_time": 1774800380,
+      "status": 201,
+      "sub_type": 5,
+      "template_id": "multi_conn_grid",
+      "type": 6
+    },
+    "pk_play": {
+      "dm_conf": {
+        "bg_color": "#72C5E2",
+        "font_color": "#FFE10B"
+      },
+      "pre_duration": 10,
+      "show_streak": false
+    },
+    "timestamp": 1774800505
+  },
+  "msg_id": "90436141525771264:1000:1000",
+  "p_is_ack": true,
+  "p_msg_type": 1,
+  "send_time": 1774800505448
+}
+```
 </details>
 
 #### 直播间用户点赞
