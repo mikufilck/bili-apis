@@ -1075,90 +1075,178 @@ json格式
 
 | 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd | str | "COMBO_SEND" | |
-| data | obj | 礼物投喂者、礼物信息等 | |
+| cmd  | str | "COMBO_SEND" | 触发礼物连击特效。 |
+| data | obj | 连击详情 | 包含送礼人、收礼人以及连击数量的精确数据。 |
 
 data字段
 
-| 字段 |    类型   |  内容  |    备注    |
-| ---- | -------- | ------ | --------- |
-| action | str | 礼物操作，一般为"投喂" | |
-| batch_combo_id | str | 待调查 | |
-| batch_combo_num | num | 连击礼物数量 | |
-| combo_id | str | 待调查 | |
-| combo_num | str | 连击礼物数量 | |
-| combo_total_coin | num | 连击礼物总金额 | |
-| dmscore | num | 待调查 | |
-| gift_id | num | 待调查 | |
-| gift_name | str | 连击礼物的名称 | |
-| gift_num | num | 0 | |
-| is_join_receiver | bool | 待调查 | |
-| is_naming | bool | 是否冠名 | |
-| is_show | num | 是否显示 | 1为显示 |
-| medal_info | obj | 礼物投喂者的粉丝勋章信息 | |
-| name_color | str | 待调查 | |
-| r_uname | str | 主播的名称 | |
-| receive_user_info | obj | 主播的UID和名称 | |
-| ruid | num | 主播的UID | |
-| send_master | | 待调查 | |
-| total_num | num | 连击礼物总数量 | |
-| uid | num | 礼物投喂者的UID | |
-| uname | str | 礼物投喂者的名称 | |
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| action | str | 动作文本 | 通常为 `"投喂"` 或 `"赠送"`。 |
+| batch_combo_id | str | 批量连击批次ID | 用于追踪这一次连续点击行为。 |
+| batch_combo_num | num | 批次内连击数量 | |
+| coin_type | str | 货币类型 | 如 `"gold"` (金瓜子) 或 `"silver"` (银瓜子)。 |
+| combo_id | str | 连击唯一ID | 格式如 `"gift:combo_id:送礼人UID:收礼人UID:礼物ID:时间戳"`。 |
+| combo_num | num | **当前连击数** | 例如 `5` 代表目前是 5 连击，**前端直接用此值渲染 x5 效果**。 |
+| combo_total_coin | num | 连击累计消费 | 本次连击累计消耗的瓜子总数。 |
+| dmscore | num | 互动积分 | |
+| gift_id | num | 礼物ID | 唯一标识是哪种礼物（如 `31036` 代表小花花）。 |
+| gift_info | obj | 礼物图像信息 | 包含礼物的图片 URL。 |
+| gift_name | str | 礼物名称 | |
+| gift_num | num | 单次礼物数量 | 在 COMBO 包中通常为 `0` 或单次点击的数量。计算总数应看 `total_num` 或 `combo_num`。 |
+| group_medal | obj/null | 粉丝团信息 | 待调查，通常为 null。 |
+| is_join_receiver | bool | 是否加入收礼人 | 待调查。 |
+| is_naming | bool | 是否冠名 | 待调查。 |
+| is_show | num | 是否显示 | `1` 为显示。 |
+| medal_info | obj | **旧版粉丝牌信息** | **送礼人当前佩戴的粉丝勋章详情（扁平结构）。** |
+| name_color | str | 名字颜色 | |
+| ruid | num | 收礼人UID | |
+| r_uname | str | 收礼人昵称 | 多人连麦时，可用来判断礼物送给了哪个主播。 |
+| receive_user_info | obj | 简易收礼人信息 | 包含基础的 UID 和昵称。 |
+| receiver_uinfo | obj | 收礼人底层信息 | 包含收礼主播的精确基础数据（新版结构）。 |
+| send_master | obj/null | 赠送控制者 | 待调查。 |
+| sender_uinfo | obj | 送礼人底层信息 | 包含送礼人基础数据及新版粉丝牌结构。 |
+| total_num | num | 连击总数量 | 与 `combo_num` 类似。 |
+| uid | num | 送礼人UID | |
+| uname | str | 送礼人昵称 | |
+| wealth_level | num | 财富等级 | 送礼人的全站财富等级。 |
 
-receive_user_info字段
+data.gift_info字段 (礼物图片)
 
-| 字段 |    类型   |  内容  |    备注    |
-| ---- | -------- | ------ | --------- |
-| uid | number | 礼物接收者的UID | 一般为主播的UID |
-| uname | string | 礼物接收者的名称 | 一般为主播的名称 |
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| img_basic | str | 基础静态图片 | |
+| webp | str | 动态/高清 WebP 图片 | |
+
+data.medal_info字段 (送礼人旧版粉丝勋章)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| target_id | num | 目标UID | 发放该粉丝牌的主播 UID。 |
+| medal_name | str | 勋章名称 | |
+| medal_level | num | 勋章等级 | |
+| medal_color | num | 基础颜色 | 十进制颜色值。 |
+| medal_color_start | num | 渐变起始色 | 十进制颜色值。 |
+| medal_color_end | num | 渐变结束色 | 十进制颜色值。 |
+| medal_color_border | num | 边框颜色 | 十进制颜色值。 |
+| is_lighted | num | 是否点亮 | `1`点亮，`0`熄灭。 |
+| guard_level | num | 大航海等级 | `0`无，`1`总督，`2`提督，`3`舰长。 |
+| icon_id | num | 图标ID | |
+| anchor_roomid | num | 主播房间号 | 发放该粉丝牌的直播间号（通常为 0，需调查）。 |
+| anchor_uname | str | 主播昵称 | |
+| special | str | 特殊标识 | |
+
+data.receive_user_info字段 (简易收礼人信息)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| uid | num | 收礼人UID | |
+| uname | str | 收礼人昵称 | |
+
+data.sender_uinfo字段 (送礼人新版底层信息)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| base | obj | 基础信息 | 包含 `name` 和 `face` 等精确基础数据。 |
+| medal | obj | 粉丝勋章信息 | 包含送礼人当前佩戴的粉丝牌详情 (推荐使用此新版结构获取 V2 颜色字符串)。 |
+| guard | obj/null | 舰队信息 | |
+
+data.receiver_uinfo字段 (收礼人新版底层信息)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| base | obj | 基础信息 | 包含 `name` 和 `face` 等精确基础数据。 |
+| uid | num | 收礼人UID | |
 
 <details>
 <summary>查看消息示例：</summary>
 
 ```json
 {
-    "cmd": "COMBO_SEND",
-    "data": {
-        "action": "投喂",
-        "batch_combo_id": "batch:gift:combo_id:3493090830584635:29857468:31036:1673774515.6190",
-        "batch_combo_num": 2,
-        "combo_id": "gift:combo_id:3493090830584635:29857468:31036:1673774515.6180",
-        "combo_num": 2,
-        "combo_total_coin": 200,
-        "dmscore": 112,
-        "gift_id": 31036,
-        "gift_name": "小花花",
-        "gift_num": 0,
-        "is_join_receiver": false,
-        "is_naming": false,
-        "is_show": 1,
-        "medal_info": {
-            "anchor_roomid": 0,
-            "anchor_uname": "",
-            "guard_level": 0,
-            "icon_id": 0,
-            "is_lighted": 1,
-            "medal_color": 6067854,
-            "medal_color_border": 6067854,
-            "medal_color_end": 6067854,
-            "medal_color_start": 6067854,
-            "medal_level": 3,
-            "medal_name": "爱珞珞",
-            "special": "",
-            "target_id": 3493076559465366
-        },
-        "name_color": "",
-        "r_uname": "露萌不要雨草",
-        "receive_user_info": {
-            "uid": 29857468,
-            "uname": "露萌不要雨草"
-        },
-        "ruid": 29857468,
-        "send_master": null,
-        "total_num": 2,
-        "uid": 3493090830584635,
-        "uname": "DOC-Neo"
-    }
+  "cmd": "COMBO_SEND",
+  "data": {
+    "action": "投喂",
+    "batch_combo_id": "batch:gift:combo_id:26928797:3546607121336514:31036:1774804255.6305",
+    "batch_combo_num": 5,
+    "coin_type": "gold",
+    "combo_id": "gift:combo_id:26928797:3546607121336514:31036:1774804255.6294",
+    "combo_num": 5,
+    "combo_total_coin": 500,
+    "dmscore": 896,
+    "gift_id": 31036,
+    "gift_info": {
+      "img_basic": "[https://s1.hdslb.com/bfs/live/5126973892625f3a43a8290be6b625b5e54261a5.png](https://s1.hdslb.com/bfs/live/5126973892625f3a43a8290be6b625b5e54261a5.png)",
+      "webp": "[https://i0.hdslb.com/bfs/live/28357ba4cd566418730ca29da2c552efa7e4a390.webp](https://i0.hdslb.com/bfs/live/28357ba4cd566418730ca29da2c552efa7e4a390.webp)"
+    },
+    "gift_name": "小花花",
+    "gift_num": 0,
+    "group_medal": null,
+    "is_join_receiver": false,
+    "is_naming": false,
+    "is_show": 1,
+    "medal_info": {
+      "anchor_roomid": 0,
+      "anchor_uname": "",
+      "guard_level": 0,
+      "icon_id": 0,
+      "is_lighted": 0,
+      "medal_color": 2951253,
+      "medal_color_border": 12632256,
+      "medal_color_end": 12632256,
+      "medal_color_start": 12632256,
+      "medal_level": 29,
+      "medal_name": "挽抑云",
+      "special": "",
+      "target_id": 1899012758
+    },
+    "name_color": "",
+    "r_uname": "枳念念",
+    "receive_user_info": {
+      "uid": 3546607121336514,
+      "uname": "枳念念"
+    },
+    "receiver_uinfo": {
+      "base": {
+        "face": "[https://i0.hdslb.com/bfs/face/f45351c32455b2c7246a07d206acc51f4a8671ff.jpg](https://i0.hdslb.com/bfs/face/f45351c32455b2c7246a07d206acc51f4a8671ff.jpg)",
+        "is_mystery": false,
+        "name": "枳念念",
+        "name_color": 0,
+        "name_color_str": "",
+        "official_info": { "desc": "", "role": 0, "title": "", "type": -1 },
+        "origin_info": { "face": "[https://i0.hdslb.com/bfs/face/f45351c32455b2c7246a07d206acc51f4a8671ff.jpg](https://i0.hdslb.com/bfs/face/f45351c32455b2c7246a07d206acc51f4a8671ff.jpg)", "name": "枳念念" },
+        "risk_ctrl_info": null
+      },
+      "guard": null, "guard_leader": null, "medal": null, "title": null, "uhead_frame": null,
+      "uid": 3546607121336514, "wealth": null
+    },
+    "ruid": 3546607121336514,
+    "send_master": null,
+    "sender_uinfo": {
+      "base": {
+        "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)",
+        "is_mystery": false,
+        "name": "mikufilck",
+        "name_color": 0,
+        "name_color_str": "",
+        "official_info": { "desc": "", "role": 0, "title": "", "type": -1 },
+        "origin_info": { "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)", "name": "mikufilck" },
+        "risk_ctrl_info": null
+      },
+      "guard": null, "guard_leader": null,
+      "medal": {
+        "color": 13081892, "color_border": 13081892, "color_end": 13081892, "color_start": 13081892,
+        "guard_icon": "", "guard_level": 0, "honor_icon": "", "id": 0, "is_light": 1, "level": 19,
+        "name": "枳上语", "ruid": 3546607121336514, "score": 1433, "typ": 0, "user_receive_count": 0,
+        "v2_medal_color_border": "#C770A499", "v2_medal_color_end": "#C770A499",
+        "v2_medal_color_level": "#C770A4E6", "v2_medal_color_start": "#C770A499", "v2_medal_color_text": "#FFFFFF"
+      },
+      "title": null, "uhead_frame": null, "uid": 26928797, "wealth": null
+    },
+    "total_num": 5,
+    "uid": 26928797,
+    "uname": "mikufilck",
+    "wealth_level": 32
+  }
 }
 ```
 </details>
@@ -2185,23 +2273,86 @@ data字段
 | 字段 | 类型 |   内容  |    备注   |
 | ---- | ---- | ------ | --------- |
 | uid | num | 点赞用户的UID | |
-| uname | str | 点赞用户的名称 | 建议优先使用 `uinfo.base.name` 以防后期此字段被废弃。 |
+| uname | str | 点赞用户的名称 | 建议优先使用 `uinfo.base.name`。 |
 | uname_color | str | 点赞用户的名称颜色 | |
-| like_icon | str | 点赞飘屏图标的URL | |
-| like_text | str | 点赞动作文本 | 通常为 "为主播点赞了" |
-| msg_type | num | 消息类型 | 默认为 6 |
-| show_area | num | 显示区域 | 待调查 |
+| like_icon | str | 点赞飘屏图标的URL | 前端右下角飘起的图标样式。 |
+| like_text | str | 点赞动作文本 | 通常为 `"为主播点赞了"`。 |
+| msg_type | num | 消息类型 | 默认为 `6`。 |
+| show_area | num | 显示区域 | 待调查（例如 `1`）。 |
 | is_mystery | bool | 是否神秘人 | |
-| dmscore | num | 弹幕/互动积分 | |
-| identities | array | 身份组 | 待调查 (如 `[3, 1]`) |
-| contribution_info | obj | 贡献信息 | |
-| fans_medal | obj | 旧版粉丝勋章信息 | 建议使用 `uinfo.medal` 获取更全的新版数据。 |
-| group_medal | obj/null | 待调查 | |
-| uinfo | obj | **点赞用户的详细底层信息** | **结构与 `ENTRY_EFFECT` 中的 `uinfo` 完全一致，包含精确的 `base`, `medal`, `guard` 等字段。** |
+| dmscore | num | 互动积分 | |
+| identities | array | 身份组 | 例如 `[3, 1]`，代表用户的某些特权标识。 |
+| contribution_info | obj | 贡献信息 | 包含 `grade` (等级) 等字段。 |
+| group_medal | obj/null | 粉丝团信息 | 待调查，通常为 null。 |
+| fans_medal | obj | **旧版粉丝勋章信息** | **点赞用户当前佩戴的粉丝牌（扁平结构）。** |
+| uinfo | obj | **点赞用户的底层信息** | **包含精确的 `base`, `medal`, `guard` 等新版结构字段。** |
+
+data.fans_medal字段 (旧版粉丝勋章)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| target_id | num | 目标UID | 发放该粉丝牌的主播 UID。 |
+| medal_name | str | 勋章名称 | |
+| medal_level | num | 勋章等级 | |
+| medal_color | num | 基础颜色 | 十进制颜色值。 |
+| medal_color_start | num | 渐变起始色 | 十进制颜色值。 |
+| medal_color_end | num | 渐变结束色 | 十进制颜色值。 |
+| medal_color_border | num | 边框颜色 | 十进制颜色值。 |
+| is_lighted | num | 是否点亮 | `1`点亮，`0`熄灭。 |
+| guard_level | num | 大航海等级 | `0`无，`1`总督，`2`提督，`3`舰长。 |
+| icon_id | num | 图标ID | |
+| anchor_roomid | num | 主播房间号 | 发放该粉丝牌的直播间号（部分情况为 0）。 |
+| score | num | 亲密度/积分 | |
+| special | str | 特殊标识 | |
+
+data.uinfo.base字段 (新版基础信息)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| name | str | 用户完整昵称 | |
+| face | str | 头像URL | |
+| is_mystery | bool | 是否隐藏身份 | |
+| name_color | num | 名字颜色 | |
+| name_color_str | str | 名字颜色字符串 | |
+| official_info | obj | 官方认证信息 | 包含 `desc`, `role`, `title`, `type` (普通用户 type 通常为 -1)。 |
+| origin_info | obj | 原始信息 | 包含 `face` 和 `name` 的备份。 |
+| risk_ctrl_info | obj/null | 风控相关信息 | |
+
+data.uinfo.medal字段 (新版粉丝勋章)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| name | str | 粉丝勋章名称 | |
+| level | num | 粉丝勋章等级 | |
+| color | num | 基础颜色 | |
+| color_start | num | 背景渐变起始色 | |
+| color_end | num | 背景渐变结束色 | |
+| color_border | num | 边框颜色 | |
+| id | num | 粉丝牌ID | |
+| typ | num | 待调查 | |
+| is_light | num | 粉丝牌是否点亮 | `1`点亮，`0`熄灭。 |
+| ruid | num | 发放此粉丝牌的主播UID | |
+| guard_level | num | 对应的大航海等级 | `0`无，`1`总督，`2`提督，`3`舰长。 |
+| score | num | 亲密度/积分 | |
+| guard_icon | str | 舰队图标 | |
+| honor_icon | str | 荣誉图标 | |
+| user_receive_count | num | 待调查 | |
+| v2_medal_color_start | str | V2起始色 | Hex格式（带透明度），如 `"#3FB4F699"`。 |
+| v2_medal_color_end | str | V2结束色 | Hex格式（带透明度）。 |
+| v2_medal_color_border | str | V2边框色 | Hex格式（带透明度）。 |
+| v2_medal_color_text | str | V2文字色 | Hex格式，如 `"#FFFFFF"`。 |
+| v2_medal_color_level | str | V2等级色 | Hex格式（带透明度）。 |
+
+data.uinfo.guard字段 (大航海/舰队)
+
+| 字段 | 类型 |   内容  |    备注   |
+| ---- | ---- | ------ | --------- |
+| level | num | 大航海等级 | `0`无，`1`总督，`2`提督，`3`舰长。 |
+| expired_str | str | 过期时间 | |
 
 <details>
 <summary>查看消息示例：</summary>
-  
+
 ```json
 {
   "cmd": "LIKE_INFO_V3_CLICK",
@@ -2226,10 +2377,7 @@ data字段
       "target_id": 3546792096434666
     },
     "group_medal": null,
-    "identities": [
-      3,
-      1
-    ],
+    "identities": [3, 1],
     "is_mystery": false,
     "like_icon": "[https://i0.hdslb.com/bfs/live/23678e3d90402bea6a65251b3e728044c21b1f0f.png](https://i0.hdslb.com/bfs/live/23678e3d90402bea6a65251b3e728044c21b1f0f.png)",
     "like_text": "为主播点赞了",
