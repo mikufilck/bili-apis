@@ -532,8 +532,9 @@ data字段
   }
 }
 
-</details>
 ```
+
+</details>
 
 #### 上舰通知
 
