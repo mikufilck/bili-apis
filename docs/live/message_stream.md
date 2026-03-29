@@ -1552,61 +1552,118 @@ json格式
 | 字段 | 类型 |   内容  |    备注   |
 | ---- | ---- | ------ | --------- |
 | cmd  | str | "LIKE_INFO_V3_CLICK" | 若直播间被赞，则内容是"LIKE_INFO_V3_CLICK" |
-| data | obj | 点赞的用户的信息 | |
+| data | obj | 点赞用户信息与点赞细节 | 包含了统一的 `uinfo` 底层结构。 |
 
 data字段
 
 | 字段 | 类型 |   内容  |    备注   |
 | ---- | ---- | ------ | --------- |
-| show_area | num | 待调查 | |
-| msg_type | num | 待调查 | |
-| like_icon | str | 点赞图标的URL | |
-| uid | num | 点赞的用户的UID | |
-| like_text | str | 点赞文本 | |
-| uname | str | 点赞的用户的名称 | |
-| uname_color | str | 点赞的用户的名称颜色 | |
-| identities | array | 待调查 | |
-| fans_medal | obj | 点赞的用户的粉丝勋章信息 | |
-| contribution_info | obj | 待调查 | |
-| dmscore | num | 待调查 | |
+| uid | num | 点赞用户的UID | |
+| uname | str | 点赞用户的名称 | 建议优先使用 `uinfo.base.name` 以防后期此字段被废弃。 |
+| uname_color | str | 点赞用户的名称颜色 | |
+| like_icon | str | 点赞飘屏图标的URL | |
+| like_text | str | 点赞动作文本 | 通常为 "为主播点赞了" |
+| msg_type | num | 消息类型 | 默认为 6 |
+| show_area | num | 显示区域 | 待调查 |
+| is_mystery | bool | 是否神秘人 | |
+| dmscore | num | 弹幕/互动积分 | |
+| identities | array | 身份组 | 待调查 (如 `[3, 1]`) |
+| contribution_info | obj | 贡献信息 | |
+| fans_medal | obj | 旧版粉丝勋章信息 | 建议使用 `uinfo.medal` 获取更全的新版数据。 |
+| group_medal | obj/null | 待调查 | |
+| uinfo | obj | **点赞用户的详细底层信息** | **结构与 `ENTRY_EFFECT` 中的 `uinfo` 完全一致，包含精确的 `base`, `medal`, `guard` 等字段。** |
 
 <details>
 <summary>查看消息示例：</summary>
   
 ```json
 {
-    "cmd": "LIKE_INFO_V3_CLICK",
-    "data": {
-        "show_area": 0,
-        "msg_type": 6,
-        "like_icon": "https://i0.hdslb.com/bfs/live/23678e3d90402bea6a65251b3e728044c21b1f0f.png",
-        "uid": 32174213,
-        "like_text": "为主播点赞了",
-        "uname": "MeiDngS",
-        "uname_color": "",
-        "identities": [
-            1
-        ],
-        "fans_medal": {
-            "target_id": 0,
-            "medal_level": 0,
-            "medal_name": "",
-            "medal_color": 0,
-            "medal_color_start": 12632256,
-            "medal_color_end": 12632256,
-            "medal_color_border": 12632256,
-            "is_lighted": 0,
-            "guard_level": 0,
-            "special": "",
-            "icon_id": 0,
-            "anchor_roomid": 0,
-            "score": 0
+  "cmd": "LIKE_INFO_V3_CLICK",
+  "data": {
+    "contribution_info": {
+      "grade": 0
+    },
+    "dmscore": 128,
+    "fans_medal": {
+      "anchor_roomid": 0,
+      "guard_level": 0,
+      "icon_id": 0,
+      "is_lighted": 1,
+      "medal_color": 1725515,
+      "medal_color_border": 1725515,
+      "medal_color_end": 5414290,
+      "medal_color_start": 1725515,
+      "medal_level": 24,
+      "medal_name": "啵莉星",
+      "score": 6003,
+      "special": "",
+      "target_id": 3546792096434666
+    },
+    "group_medal": null,
+    "identities": [
+      3,
+      1
+    ],
+    "is_mystery": false,
+    "like_icon": "[https://i0.hdslb.com/bfs/live/23678e3d90402bea6a65251b3e728044c21b1f0f.png](https://i0.hdslb.com/bfs/live/23678e3d90402bea6a65251b3e728044c21b1f0f.png)",
+    "like_text": "为主播点赞了",
+    "msg_type": 6,
+    "show_area": 1,
+    "uid": 26928797,
+    "uinfo": {
+      "base": {
+        "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)",
+        "is_mystery": false,
+        "name": "mikufilck",
+        "name_color": 0,
+        "name_color_str": "",
+        "official_info": {
+          "desc": "",
+          "role": 0,
+          "title": "",
+          "type": -1
         },
-        "contribution_info": {
-            "grade": 0
+        "origin_info": {
+          "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)",
+          "name": "mikufilck"
         },
-        "dmscore": 20
-    }
+        "risk_ctrl_info": null
+      },
+      "guard": {
+        "expired_str": "",
+        "level": 0
+      },
+      "guard_leader": null,
+      "medal": {
+        "color": 1725515,
+        "color_border": 1725515,
+        "color_end": 5414290,
+        "color_start": 1725515,
+        "guard_icon": "",
+        "guard_level": 0,
+        "honor_icon": "",
+        "id": 0,
+        "is_light": 1,
+        "level": 24,
+        "name": "啵莉星",
+        "ruid": 3546792096434666,
+        "score": 6003,
+        "typ": 0,
+        "user_receive_count": 0,
+        "v2_medal_color_border": "#3FB4F699",
+        "v2_medal_color_end": "#3FB4F699",
+        "v2_medal_color_level": "#3FB4F6E6",
+        "v2_medal_color_start": "#3FB4F699",
+        "v2_medal_color_text": "#FFFFFF"
+      },
+      "title": null,
+      "uhead_frame": null,
+      "uid": 26928797,
+      "wealth": null
+    },
+    "uname": "mikufilck",
+    "uname_color": ""
+  }
 }
 ```
 
