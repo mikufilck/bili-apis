@@ -453,65 +453,49 @@ json格式
 
 #### 连续弹幕消息
 
-连续多条相同弹幕时触发
+连续多条相同弹幕，或者分享时触发
 
 json格式
 
 | 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd | str  | "DM_INTERACTION" | 如果是连续弹幕消息，内容是"DM_INTERACTION" |
-| data | obj  | 连续弹幕的信息 |  |
+| cmd | str  | "DM_INTERACTION" | 如果是连续弹幕或分享消息，内容是"DM_INTERACTION" |
+| data | obj  | 互动状态详情 |  |
 
 data字段
 
-| 字段 | 类型 | 内容   | 备注      |
+| 字段 | 类型 |   内容  |    备注   |
 | ---- | ---- | ------ | --------- |
-| id | num  | 事件ID |  |
-| status | num | 状态 |  |
-| type | num | 事件类型 |  |
-| data | str | 事件数据 |  |
+| id | num | 事件唯一ID | 前端根据此ID合并或更新同一个 UI 框的状态。 |
+| type | num | 互动类型 | `105` 为分享直播间。其他可能为高频弹幕造梗连击等。 |
+| status | num | 状态码 | 可能是 UI 框的生命周期（如出现、维持、消散）。 |
+| dmscore | num | 互动积分 | |
+| data | str | 序列化的 JSON 字符串 | **注意这是一个字符串格式的 JSON，包含具体的 UI 渲染控制参数。** |
 
-连续发送弹幕事件的data.data字段
+data.data字段 (将字符串反序列化后的内部对象)
 
-| 字段 | 类型 | 内容   | 备注      |
+| 字段 | 类型 |   内容  |    备注   |
 | ---- | ---- | ------ | --------- |
-| combo | array  | 连续发送弹幕事件信息 |  |
-| merge_interval | num | 合并弹幕时间间隔 |  |
-| card_appear_interval | num | 弹窗出现时间间隔 |  |
-| send_interval | num | 发送时间间隔 |  |
-
-连续发送弹幕事件的data.data.combo字段
-
-| 字段 | 类型 | 内容   | 备注      |
-| ---- | ---- | ------ | --------- |
-| id | num  | 时间ID |  |
-| status | num | 状态 |  |
-| content | str | 重复的弹幕内容 |  |
-| cnt | num | 重复数量 |  |
-| guide | str | 标题词 | "他们都在说:" |
-| left_duration | num | 左移时长 |  |
-| fade_duration | num | 淡化时长 |  |
+| cnt | num | 累计数量 | 例如：当前累计有 `1` 人触发。 |
+| suffix_text | str | 后缀文本 | 例如："人分享了直播间" 或 "x连击" |
+| fade_duration | num | UI消散时间 | 单位为毫秒，例如 `10000` 代表停留 10 秒。 |
+| display_flag | num | 是否展示标志 | 1展示，0隐藏 |
+| card_appear_interval | num | 出现间隔时间 | 待调查 |
+| reset_cnt | num | 重置计数 | 待调查 |
 
 <details>
 <summary>查看消息示例：</summary>
 
 ```json
 {
-    '': 6785480089600,
-    'status': 4,
-    'type': 102,
-    'data': '{
-        "combo":[{
-            "id":6785480089600,
-            "status":4,
-            "content":"晚安",
-            "cnt":3,
-            "guide":"他们都在说:",
-            "left_duration":20000,
-            "fade_duration":60000}],
-        "merge_interval":1000,
-        "card_appear_interval":1000,
-        "send_interval":1000}'
+  "cmd": "DM_INTERACTION",
+  "data": {
+    "data": "{\"fade_duration\":10000,\"cnt\":1,\"card_appear_interval\":0,\"suffix_text\":\"人分享了直播间\",\"reset_cnt\":0,\"display_flag\":1}",
+    "dmscore": 36,
+    "id": 158234096820736,
+    "status": 4,
+    "type": 105
+  }
 }
 ```
 
