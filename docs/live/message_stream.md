@@ -302,11 +302,12 @@ json格式
 | 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
 | cmd | str  | "DANMU_MSG" | 如果是弹幕消息，内容则是"DANMU_MSG" |
+| dm_v2 | str  | 待调查 | 目前观察到为空字符串 |
 | info | array | 这条弹幕的用户、内容与粉丝勋章等各种信息 | 待调查其中每个数据的含义 |
 
-<!-- info字段
+info字段
 
-| 索引 | 类型 | 内容   |    备注   |
+| 索引 | 类型 | 内容   |   备注   |
 | ---- | ---- | ------ | -------- |
 | 0 | array | 弹幕信息 | |
 | 1 | str | 弹幕文本 | |
@@ -316,27 +317,36 @@ json格式
 | 5 | array | 待调查 | |
 | 6 | num | 待调查 | |
 | 7 | num | 待调查 | |
-| 8 | | 待调查 | |
-| 9 | obj | 弹幕发送的Unix时间戳 | |
+| 8 | obj | 待调查 | 有时为null |
+| 9 | obj | 弹幕发送的Unix时间戳 | 包含ts和ct字段 |
 | 10 | num | 待调查 | |
 | 11 | num | 待调查 | |
-| 12 | | 待调查 | |
-| 13 | | 待调查 | |
+| 12 | obj | 待调查 | 有时为null |
+| 13 | obj | 待调查 | 有时为null |
 | 14 | num | 待调查 | |
-| 15 | num | 待调查 | |
+| 15 | num | 待调查 | 旧版常见值为21，新版观察到有208等 |
+| 16 | array | 待调查 | |
+| 17 | obj | 待调查 | 有时为null |
+
+9索引
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| ts | num | 弹幕发送的时间戳 | 精确到秒 |
+| ct | str | 校验码或特征码 | 16进制字符串 |
 
 0索引
 
-| 索引 | 类型 | 内容   |    备注   |
+| 索引 | 类型 | 内容   |   备注   |
 | ---- | ---- | ------ | -------- |
 | 0 | num | 待调查 | |
 | 1 | num | 弹幕模式 | 弹幕的mode字段 |
 | 2 | num | 弹幕字体大小 | 弹幕的fontsize字段 |
 | 3 | num | 弹幕颜色 | 弹幕的color字段<br />十六进制颜色值的十进制数字 |
-| 4 | num | 待调查 | |
-| 5 | num | 弹幕发送时的Unix时间戳 | 弹幕的rnd字段 |
+| 4 | num | 待调查 | 弹幕发送时的Unix时间戳，精确到毫秒 |
+| 5 | num | 弹幕发送时的Unix时间戳 | 弹幕的rnd字段，精确到秒 |
 | 6 | num | 待调查 | |
-| 7 | str | 待调查 | |
+| 7 | str | 用户Hash | 用户的特征码/哈希码 |
 | 8 | num | 待调查 | |
 | 9 | num | 待调查 | |
 | 10 | num | 待调查 | |
@@ -344,115 +354,269 @@ json格式
 | 12 | num | 待调查 | |
 | 13 | str | 待调查 | |
 | 14 | str | 待调查 | |
-| 15 | obj | 弹幕信息 | |
-| 16 | obj | 待调查 | |
+| 15 | obj | 弹幕扩展与用户详情 | |
+| 16 | obj | 活动信息 | |
+| 17 | num | 待调查 | |
+
+2索引
+
+| 索引 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| 0 | num | 发送者UID | |
+| 1 | str | 发送者昵称 | |
+| 2 | num | 待调查 | |
+| 3 | num | 待调查 | |
+| 4 | num | 待调查 | |
+| 5 | num | 待调查 | 通常为10000 |
+| 6 | num | 待调查 | 通常为1 |
+| 7 | str | 待调查 | |
 
 0索引的15索引
 
-| 字段 | 类型 | 内容   |    备注   |
+| 字段 | 类型 | 内容   |   备注   |
 | ---- | ---- | ------ | -------- |
+| extra | str | 弹幕额外信息 | 包含大量弹幕UI展示参数的JSON字符串（需反序列化解析，结构见下方） |
 | mode | num | 待调查 | |
 | show_player_type | num | 待调查 | |
-| extra | str | 弹幕信息 | |
+| user | obj | 发送者详细信息 | |
+
+0索引的15索引的extra字段 (反序列化后的内部JSON对象)
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| send_from_me | bool | 是否由自己发送 | |
+| master_player_hidden | bool | 是否隐藏房主标志 | |
+| mode | num | 弹幕模式 | |
+| color | num | 弹幕颜色十进制值 | |
+| dm_type | num | 弹幕类型 | |
+| font_size | num | 字体大小 | |
+| player_mode | num | 播放器模式 | |
+| show_player_type | num | 显示播放器类型 | |
+| content | str | 弹幕文本内容 | 与1索引内容一致 |
+| user_hash | str | 用户Hash | 与0索引的7索引一致 |
+| emoticon_unique | str | 表情包唯一标识 | |
+| bulge_display | num | 突出显示标志 | |
+| recommend_score | num | 推荐分数 | |
+| dm_score | num | 弹幕分数 | |
+| chronos_force_display | num | 待调查 | |
+| main_state_dm_color | str | 主状态弹幕颜色 | |
+| objective_state_dm_color| str | 客观状态弹幕颜色| |
+| direction | num | 方向 | |
+| pk_direction | num | PK方向 | |
+| quartet_direction | num | 待调查 | |
+| anniversary_crowd | num | 周年人群标志 | |
+| yeah_space_type | str | 待调查 | |
+| yeah_space_url | str | 待调查 | |
+| jump_to_url | str | 跳转链接 | |
+| space_type | str | 空间类型 | |
+| space_url | str | 空间链接 | |
+| animation | obj | 动画参数 | |
+| emots | obj | 表情数据 | 若无则为null |
+| is_audited | bool | 是否经过审核 | |
+| id_str | str | 弹幕唯一字符串ID | 常用于精准撤回弹幕 |
+| icon | obj | 弹幕图标 | 若无则为null |
+| show_reply | bool | 是否允许回复 | |
+| reply_mid | num | 回复目标UID | 0表示未回复任何人 |
+| reply_uname | str | 回复目标昵称 | |
+| reply_uname_color | str | 回复目标昵称颜色 | |
+| reply_is_mystery | bool | 回复目标是否神秘人| |
+| reply_type_enum | num | 回复类型枚举 | |
+| hit_combo | num | 连击数 | |
+| esports_jump_url | str | 电竞跳转链接 | |
+| is_mirror | bool | 是否镜像 | |
+| is_collaboration_member | bool | 是否为合作成员 | |
+| card | obj | 卡片信息 | 见下方展开 |
+| voice | obj | 语音信息 | 若无则为null |
+| background_type | num | 背景类型 | |
+
+0索引的15索引的extra的card字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| card_type | num | 卡片类型 | |
+| oid_str | str | 待调查 | |
+| oid_str_1 | str | 待调查 | |
+| origin_oid_str | str | 待调查 | |
+| share_id | str | 分享ID | |
+| share_origin | str | 分享来源 | |
+| from | str | 来源 | |
+| card_content | obj | 卡片内容 | 若无则为null |
+
+0索引的15索引的user字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| base | obj | 基础资料 | 见下方展开 |
+| guard | obj | 舰队信息 | 若无则为null |
+| guard_leader | obj | 舰队队长状态 | 见下方展开 |
+| medal | obj | 粉丝勋章详情 | 若无则为null |
+| title | obj | 称号信息 | 见下方展开 |
+| uhead_frame | obj | 头像框信息 | 若无则为null |
+| uid | num | 发送者UID | |
+| wealth | obj | 财富信息 | 若无则为null |
+
+0索引的15索引的user的base字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| face | str | 头像链接 | |
+| is_mystery | bool | 是否神秘人 | |
+| name | str | 用户昵称 | |
+| name_color | num | 昵称颜色 | |
+| name_color_str | str | 昵称颜色字符串 | |
+| official_info | obj | 官方认证信息 | 见下方展开 |
+| origin_info | obj | 原始信息 | 见下方展开 |
+| risk_ctrl_info | obj | 风控信息 | 若无则为null |
+
+0索引的15索引的user的base的official_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| desc | str | 认证描述 | |
+| role | num | 认证角色 | |
+| title | str | 认证头衔 | |
+| type | num | 认证类型 | |
+
+0索引的15索引的user的base的origin_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| face | str | 原始头像链接 | |
+| name | str | 原始昵称 | |
+
+0索引的15索引的user的guard_leader字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| is_guard_leader | bool | 是否舰队队长 | |
+
+0索引的15索引的user的title字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| old_title_css_id | str | 旧版称号CSS的ID | |
+| title_css_id | str | 称号CSS的ID | |
 
 0索引的16索引
 
-| 字段 | 类型 | 内容   |    备注   |
+| 字段 | 类型 | 内容   |   备注   |
 | ---- | ---- | ------ | -------- |
 | activity_identity | str | 待调查 | |
 | activity_source | num | 待调查 | |
-| not_show | num | 待调查 | | -->
-
-
-
+| not_show | num | 待调查 | |
 
 <details>
 <summary>查看消息示例：</summary>
 
-``` json
+```json
 {
-    "cmd": "DANMU_MSG",
-    "info": [
-        [
-            0,
-            1,
-            25,
-            16777215,
-            1673789362967,
-            1673770572,
-            0,
-            "81240bc1",
-            0,
-            0,
-            0,
-            "",
-            0,
-            "{}",
-            "{}",
-            {
-                "mode": 0,
-                "show_player_type": 0,
-                "extra": "{\"send_from_me\":false,\"mode\":0,\"color\":16777215,\"dm_type\":0,\"font_size\":25,\"player_mode\":1,\"show_player_type\":0,\"content\":\"测试文本\",\"user_hash\":\"2166623169\",\"emoticon_unique\":\"\",\"bulge_display\":0,\"recommend_score\":8,\"main_state_dm_color\":\"\",\"objective_state_dm_color\":\"\",\"direction\":0,\"pk_direction\":0,\"quartet_direction\":0,\"anniversary_crowd\":0,\"yeah_space_type\":\"\",\"yeah_space_url\":\"\",\"jump_to_url\":\"\",\"space_type\":\"\",\"space_url\":\"\",\"animation\":{},\"emots\":null}"
+  "cmd": "DANMU_MSG",
+  "dm_v2": "",
+  "info": [
+    [
+      0,
+      1,
+      25,
+      16777215,
+      1775751629449,
+      1775751630,
+      0,
+      "70d2585a",
+      0,
+      0,
+      0,
+      "",
+      0,
+      "{}",
+      "{}",
+      {
+        "extra": "{\"send_from_me\":false,\"master_player_hidden\":false,\"mode\":0,\"color\":16777215,\"dm_type\":0,\"font_size\":25,\"player_mode\":1,\"show_player_type\":0,\"content\":\"欢迎 mikufilck 来到直播间！\",\"user_hash\":\"1892833370\",\"emoticon_unique\":\"\",\"bulge_display\":0,\"recommend_score\":0,\"dm_score\":0,\"chronos_force_display\":0,\"main_state_dm_color\":\"\",\"objective_state_dm_color\":\"\",\"direction\":0,\"pk_direction\":0,\"quartet_direction\":0,\"anniversary_crowd\":0,\"yeah_space_type\":\"\",\"yeah_space_url\":\"\",\"jump_to_url\":\"\",\"space_type\":\"\",\"space_url\":\"\",\"animation\":{},\"emots\":null,\"is_audited\":false,\"id_str\":\"51f8de4ff040fc4f5d9bc5d30069d7d16508\",\"icon\":null,\"show_reply\":true,\"reply_mid\":0,\"reply_uname\":\"\",\"reply_uname_color\":\"\",\"reply_is_mystery\":false,\"reply_type_enum\":0,\"hit_combo\":0,\"esports_jump_url\":\"\",\"is_mirror\":false,\"is_collaboration_member\":false,\"card\":{\"card_type\":0,\"oid_str\":\"\",\"oid_str_1\":\"\",\"origin_oid_str\":\"\",\"share_id\":\"\",\"share_origin\":\"\",\"from\":\"\",\"card_content\":null},\"voice\":null,\"background_type\":0}",
+        "mode": 0,
+        "show_player_type": 0,
+        "user": {
+          "base": {
+            "face": "[https://i0.hdslb.com/bfs/face/0348ddae8ea088ab5f38aaeb4842fb57968b86de.jpg](https://i0.hdslb.com/bfs/face/0348ddae8ea088ab5f38aaeb4842fb57968b86de.jpg)",
+            "is_mystery": false,
+            "name": "ACGN_mikufilck",
+            "name_color": 0,
+            "name_color_str": "",
+            "official_info": {
+              "desc": "",
+              "role": 0,
+              "title": "",
+              "type": -1
             },
-            {
-                "activity_identity": "",
-                "activity_source": 0,
-                "not_show": 0
-            }
-        ],
-        "测试文本",
-        [
-            50500335,
-            "属官一号",
-            0,
-            0,
-            0,
-            10000,
-            1,
-            ""
-        ],
-        [
-            5,
-            "小纸鱼",
-            "薄海纸鱼",
-            706667,
-            6126494,
-            "",
-            0,
-            12632256,
-            12632256,
-            12632256,
-            0,
-            0,
-            1837617
-        ],
-        [
-            0,
-            0,
-            9868950,
-            ">50000",
-            2
-        ],
-        [
-            "",
-            ""
-        ],
-        0,
-        0,
-        null,
-        {
-            "ts": 1673789362,
-            "ct": "A4721FE3"
-        },
-        0,
-        0,
-        null,
-        null,
-        0,
-        21
-    ]
+            "origin_info": {
+              "face": "[https://i0.hdslb.com/bfs/face/0348ddae8ea088ab5f38aaeb4842fb57968b86de.jpg](https://i0.hdslb.com/bfs/face/0348ddae8ea088ab5f38aaeb4842fb57968b86de.jpg)",
+              "name": "ACGN_mikufilck"
+            },
+            "risk_ctrl_info": null
+          },
+          "guard": null,
+          "guard_leader": {
+            "is_guard_leader": false
+          },
+          "medal": null,
+          "title": {
+            "old_title_css_id": "",
+            "title_css_id": ""
+          },
+          "uhead_frame": null,
+          "uid": 3493286400494454,
+          "wealth": null
+        }
+      },
+      {
+        "activity_identity": "",
+        "activity_source": 0,
+        "not_show": 0
+      },
+      0
+    ],
+    "欢迎 mikufilck 来到直播间！",
+    [
+      3493286400494454,
+      "ACGN_mikufilck",
+      0,
+      0,
+      0,
+      10000,
+      1,
+      ""
+    ],
+    [],
+    [
+      0,
+      0,
+      9868950,
+      ">50000",
+      2
+    ],
+    [
+      "",
+      ""
+    ],
+    0,
+    0,
+    null,
+    {
+      "ct": "5814F6B",
+      "ts": 1775751629
+    },
+    0,
+    0,
+    null,
+    null,
+    0,
+    208,
+    [
+      7
+    ],
+    null
+  ]
 }
 ```
+
 </details>
 
 
