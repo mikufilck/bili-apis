@@ -1553,216 +1553,307 @@ data的uinfo的title字段
 
 #### 送礼
 
+当用户在直播间投喂礼物（包括普通礼物、盲盒礼物爆出等）时触发。
+
 json格式
 
 | 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd | str | "SEND_GIFT" | 投喂礼物等，内容则是"SEND_GIFT" |
-| data | obj | 礼物投喂人、礼物信息、礼物数量等 |  |
+| cmd  | str  | "SEND_GIFT" | 投喂礼物时触发 |
+| danmu | obj | 弹幕区域相关配置 | 例如 `{"area": 0}` |
+| data | obj  | 礼物投喂人、礼物详情、盲盒信息、连击信息等 | 见下方展开 |
+| msg_id | str | 消息唯一ID | 格式通常为时间戳与随机数的组合 |
+| p_is_ack | bool | 待调查 | |
+| p_msg_type | num | 待调查 | |
+| send_time | num | 发送时间戳 | 精确到毫秒 |
 
 data字段
 
-| 字段 |    类型   |  内容  |    备注    |
-| ---- | -------- | ------ | --------- |
-| action | str | 礼物操作，一般为"投喂" | |
-| batch_combo_id | str | 待调查 | 有时为空字符串 |
-| batch_combo_send | obj | 待调查 | 有时为null |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| action | str | 礼物操作 | 一般为"投喂" |
+| bag_gift | obj/null | 背包礼物信息 | 若非背包礼物通常为null |
+| batch_combo_id | str | 批量连击ID | 用于合并多次投喂的UI展示 |
+| batch_combo_send | obj | 批量连击详情 | 见下方展开 |
 | beatId | str | 待调查 | |
-| biz_source | str | 待调查 | |
-| blind_gift | | 待调查 | |
-| broadcast_id | num | 待调查 | |
-| coin_type | str | 金瓜子"glod"或者银瓜子 | |
-| combo_resources_id | num | 待调查 | |
-| combo_send | | 连击详情信息 | |
-| comber_stay_time | num | 待调查 | |
-| combo_total_coin | num | 连击礼物总金额 | |
-| crit_prob | num | 待调查 | |
+| benefits | obj/null | 待调查 | |
+| biz_source | str | 业务来源 | 通常为"Live"或"live" |
+| blind_gift | obj | 盲盒礼物信息 | **[重要字段]** 若为盲盒礼物则包含具体原始购买信息，普通礼物通常为null，见下方展开 |
+| broadcast_id | num | 广播ID | |
+| coin_type | str | 货币类型 | "gold" (金瓜子/电池) 或 "silver" (银瓜子) |
+| combo_resources_id | num | 连击资源ID | |
+| combo_send | obj | 连击详情信息 | 与batch_combo_send结构类似，见下方展开 |
+| combo_stay_time | num | 连击UI停留时间 | 单位为秒 |
+| combo_total_coin | num | 连击礼物总价值 | |
+| crit_prob | num | 暴击概率 | |
 | demarcation | num | 待调查 | |
-| discount_price | num | 待调查 | |
-| dmscore | num | 待调查 | |
+| discount_price | num | 折扣价格 | |
+| dmscore | num | 弹幕积分/展示权重 | 系统根据礼物价值打分，用于控制弹幕堆积时的渲染优先级 |
 | draw | num | 待调查 | |
 | effect | num | 待调查 | |
-| effect_block | num | 待调查 | |
-| face | str | 礼物投喂者的头像URL | |
+| effect_block | num | 特效屏蔽标志 | |
+| effect_config | obj/null | 特效配置 | |
+| face | str | 投喂者头像URL | |
+| face_effect | obj | 待调查 | |
 | face_effect_id | num | 待调查 | |
 | face_effect_type | num | 待调查 | |
+| face_effect_v2 | obj | 新版特效信息 | 包含 `id` 和 `type` |
 | float_sc_resource_id | num | 待调查 | |
-| giftId | num | 礼物ID | |
-| giftName | str | 礼物名称 | |
-| giftType | num | 待调查 | |
-| gold | number | 待调查 | |
-| guard_level | num | 待调查 | |
-| is_first | bool | 是否首次 | 什么意义上的首次？待调查 |
+| giftId | num | 实际投喂/爆出的礼物ID | |
+| giftName | str | 实际投喂/爆出的礼物名称 | |
+| giftType | num | 礼物类型 | |
+| gift_info | obj | 礼物视觉特效素材 | 见下方展开 |
+| gift_tag | array | 礼物标签 | |
+| gold | num | 待调查 | |
+| group_medal | obj/null | 粉丝团勋章 | |
+| guard_level | num | 投喂者的舰队等级 | 0无，1总督，2提督，3舰长 |
+| is_first | bool | 是否首次送礼 | |
 | is_join_receiver | bool | 待调查 | |
 | is_naming | bool | 是否冠名 | |
 | is_special_batch | num | 待调查 | |
-| magnification | num | 待调查 | |
-| medal_info | obj | 礼物投喂者粉丝奖牌信息 | |
-| name_color | str | 待调查 | |
-| num | number | 该次投喂的礼物数量 | |
-| original_gift_name | str | 待调查 | |
-| price | num | 金额 | |
+| magnification | num | 抽奖倍率 | 盲盒或抽奖玩法中可能会出现倍数放大 |
+| medal_info | obj | 投喂者粉丝勋章信息 | 结构同其他消息中的medal_info |
+| name_color | str | 昵称颜色 | 十六进制颜色码 |
+| num | num | 本次投喂的礼物数量 | |
+| original_gift_name | str | 原始礼物名称 | 如果是盲盒，这里可能会有值 |
+| price | num | 单个礼物价格 | |
 | rcost | num | 待调查 | |
-| receive_user_info | obj | 礼物接收者信息，一般是主播 | |
+| receive_user_info | obj | 收礼人简要信息 | 包含 `uid` 和 `uname` |
+| receiver_uinfo | obj | 收礼人详细信息 | 包含头像等结构化数据 (见下方 sender_uinfo 展开结构) |
 | remain | num | 待调查 | |
-| rnd | num | 礼物发送时的时间戳，以及后面9位未知数字 | |
-| send_master | | 待调查 | |
+| rnd | str | 随机特征码 | 通常用于礼物唯一标识防重 |
+| send_master | obj/null | 待调查 | |
+| sender_uinfo | obj | 投喂人详细信息 | 包含基础信息、勋章、舰队等，见下方展开 |
 | silver | num | 银瓜子数 | |
 | super | num | 待调查 | |
 | super_batch_gift_num | num | 待调查 | |
 | super_gift_num | num | 待调查 | |
-| svga_block | num | 待调查 | |
+| svga_block | num | 屏蔽SVGA特效标志 | |
 | switch | bool | 待调查 | |
-| tag_image | str | 待调查 | |
-| tid | num | 礼物发送时的时间戳，以及后面9位未知数字 | 似乎与rnd字段相同 |
-| timestamp | num | 礼物发送时的时间戳 | |
-| top_list | | 待调查 | |
-| total_coin | num | 待调查 | |
-| uid | num | 礼物投喂者的UID | |
-| uname | str | 礼物投喂者的名称 | |
+| tag_image | str | 标签图片URL | |
+| tid | str | 交易ID / 时间戳特征码 | 与 rnd 类似 |
+| timestamp | num | 送礼时间戳 | 精确到秒 |
+| top_list | obj/null | 待调查 | |
+| total_coin | num | 本次投喂总金额 | |
+| uid | num | 投喂者UID | |
+| uname | str | 投喂者昵称 | |
+| wealth_level | num | 投喂者财富等级 | |
 
-batch_combo_send字段
+data的blind_gift字段 (盲盒信息)
 
-| 字段 |    类型   |  内容  |    备注    |
-| ---- | -------- | ------ | --------- |
-| action | str | 礼物操作，一般为"投喂" | |
-| batch_combo_id | str | 待调查 | |
-| batch_combo_num | num | 连击数 | |
-| blind_gift | | 待调查 | |
-| gift_id | num | 礼物id | |
-| gift_name | str | 投喂的礼物名称 | 待调查 |
-| gift_num | num | 投喂礼物数量 | 待调查 |
-| send_master | | 待调查 | |
-| uid | num | 礼物投喂者的UID | |
-| uname | str | 礼物投喂者的名称 | |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| blind_gift_config_id | num | 盲盒配置ID | |
+| from | num | 来源 | |
+| gift_action | str | 礼物动作 | 例如"爆出"，表示从盲盒中开出的行为 |
+| gift_tip_price | num | 提示价格 | 爆出礼物的实际价格 |
+| original_gift_id | num | 原始购买的礼物ID | 盲盒本体的ID（如35206代表幸运盲盒） |
+| original_gift_name | str | 原始购买的礼物名 | 例如"幸运盲盒" |
+| original_gift_price | num | 原始礼物价格 | 盲盒购买时的价格 |
 
-medal_info字段
+data的gift_info字段 (礼物视觉特效素材)
 
-| 字段 |    类型   |  内容  |    备注    |
-| ---- | -------- | ------ | --------- |
-| anchor_roomid | num | 待调查 | |
-| anchor_uname | str | 待调查 | |
-| guard_level | num | 待调查 | |
-| icon_id | num | 待调查 | |
-| is_lighted | num | 待调查 | |
-| medal_color | num | 礼物投喂者的粉丝奖牌颜色 | 十六进制颜色值转为了十进制表示 |
-| medal_border_color | num | 礼物投喂者的粉丝奖牌边框颜色 | 十六进制颜色值的十进制表示 |
-| medal_color_end | num | 待调查 | |
-| medal_color_start | num | 待调查 | |
-| medal_level | num | 礼物投喂者的粉丝奖牌等级 | |
-| medal_name | str | 礼物投喂者的粉丝奖牌名称 | |
-| special | str | 待调查 | |
-| target_id | num | 待调查 | |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| effect_id | num | 特效ID | |
+| gif | str | 动态图URL | 礼物的GIF动图链接 |
+| has_imaged_gift | num | 是否包含图像 | |
+| img_basic | str | 基础静态图URL | 礼物的PNG静态链接 |
+| webp | str | WebP动画URL | 礼物的WebP动图链接 |
 
-receive_user_info字段
+data的batch_combo_send / combo_send字段 (连击信息)
 
-| 字段 |    类型   |  内容  |    备注    |
-| ---- | -------- | ------ | --------- |
-| uid | num | 礼物接收者的UID | 一般为主播的UID |
-| uname | str | 礼物接收者的名称 | 一般为主播的名称 |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| action | str | 操作类型 | 一般为"投喂" |
+| batch_combo_id / combo_id | str | 连击标识字符串 | |
+| batch_combo_num / combo_num | num | 连击累计数量 | |
+| blind_gift | obj | 盲盒信息 | 结构同上方的 blind_gift |
+| gift_id | num | 礼物ID | |
+| gift_name | str | 礼物名称 | |
+| gift_num | num | 单次增加数量 | |
+| send_master | obj/null | 待调查 | |
+| uid | num | 投喂者UID | |
+| uname | str | 投喂者昵称 | |
+
+data的sender_uinfo字段 (投喂人详细信息)
+*(注：receiver_uinfo 结构与之完全相同)*
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| uid | num | 投喂者UID | |
+| base | obj | 基础资料 | 包含 name, face, is_mystery 等 |
+| medal | obj | 勋章详情 | 若无则为null |
+| wealth | obj | 财富信息 | 若无则为null |
+| title | obj | 称号信息 | 若无则为null |
+| guard | obj | 舰队信息 | 若无则为null |
+| uhead_frame | obj | 头像框信息 | 若无则为null |
+| guard_leader | obj | 舰队队长状态 | 若无则为null |
+
 
 <details>
-<summary>查看消息示例：</summary>
+<summary>查看消息示例 (带盲盒机制的新版)：</summary>
 
 ```json
 {
-    "cmd": "SEND_GIFT",
-    "data": {
-        "action": "投喂",
-        "batch_combo_id": "batch:gift:combo_id:510149209:36047134:31036:1673622464.8445",
-        "batch_combo_send": {
-            "action": "投喂",
-            "batch_combo_id": "batch:gift:combo_id:510149209:36047134:31036:1673622464.8445",
-            "batch_combo_num": 1,
-            "blind_gift": null,
-            "gift_id": 31036,
-            "gift_name": "小花花",
-            "gift_num": 1,
-            "send_master": null,
-            "uid": 510149209,
-            "uname": "12138额83121"
-        },
-        "beatId": "",
-        "biz_source": "live",
-        "blind_gift": null,
-        "broadcast_id": 0,
-        "coin_type": "gold",
-        "combo_resources_id": 1,
-        "combo_send": {
-            "action": "投喂",
-            "combo_id": "gift:combo_id:510149209:36047134:31036:1673622464.8434",
-            "combo_num": 1,
-            "gift_id": 31036,
-            "gift_name": "小花花",
-            "gift_num": 1,
-            "send_master": null,
-            "uid": 510149209,
-            "uname": "12138额83121"
-        },
-        "combo_stay_time": 3,
-        "combo_total_coin": 100,
-        "crit_prob": 0,
-        "demarcation": 1,
-        "discount_price": 100,
-        "dmscore": 8,
-        "draw": 0,
-        "effect": 0,
-        "effect_block": 0,
-        "face": "https://i1.hdslb.com/bfs/face/fb79103e8b33547023e2010030b6889bba2b49bf.jpg",
-        "face_effect_id": 0,
-        "face_effect_type": 0,
-        "float_sc_resource_id": 0,
-        "giftId": 31036,
-        "giftName": "小花花",
-        "giftType": 0,
-        "gold": 0,
-        "guard_level": 0,
-        "is_first": true,
-        "is_join_receiver": false,
-        "is_naming": false,
-        "is_special_batch": 0,
-        "magnification": 1,
-        "medal_info": {
-            "anchor_roomid": 0,
-            "anchor_uname": "",
-            "guard_level": 0,
-            "icon_id": 0,
-            "is_lighted": 0,
-            "medal_color": 0,
-            "medal_color_border": 0,
-            "medal_color_end": 0,
-            "medal_color_start": 0,
-            "medal_level": 0,
-            "medal_name": "",
-            "special": "",
-            "target_id": 0
-        },
-        "name_color": "",
-        "num": 1,
-        "original_gift_name": "",
-        "price": 100,
-        "rcost": 164536872,
-        "receive_user_info": {
-            "uid": 36047134,
-            "uname": "小霖QL"
-        },
-        "remain": 0,
-        "rnd": "1673622464121900003",
-        "send_master": null,
-        "silver": 0,
-        "super": 0,
-        "super_batch_gift_num": 1,
-        "super_gift_num": 1,
-        "svga_block": 0,
-        "switch": true,
-        "tag_image": "",
-        "tid": "1673622464121900003",
-        "timestamp": 1673622464,
-        "top_list": null,
-        "total_coin": 100,
-        "uid": 510149209,
-        "uname": "12138额83121"
-    }
+  "cmd": "SEND_GIFT",
+  "danmu": {
+    "area": 0
+  },
+  "data": {
+    "action": "投喂",
+    "bag_gift": null,
+    "batch_combo_id": "490a8c58-bc70-4b96-b266-99a8d1429cbc",
+    "batch_combo_send": {
+      "action": "投喂",
+      "batch_combo_id": "490a8c58-bc70-4b96-b266-99a8d1429cbc",
+      "batch_combo_num": 1,
+      "blind_gift": {
+        "blind_gift_config_id": 144,
+        "from": 0,
+        "gift_action": "爆出",
+        "gift_tip_price": 2500,
+        "original_gift_id": 35206,
+        "original_gift_name": "幸运盲盒",
+        "original_gift_price": 5000
+      },
+      "gift_id": 35311,
+      "gift_name": "好运柚叶",
+      "gift_num": 1,
+      "send_master": null,
+      "uid": 35623247,
+      "uname": "不是Kennya"
+    },
+    "beatId": "0",
+    "benefits": null,
+    "biz_source": "Live",
+    "blind_gift": {
+      "blind_gift_config_id": 144,
+      "from": 0,
+      "gift_action": "爆出",
+      "gift_tip_price": 2500,
+      "original_gift_id": 35206,
+      "original_gift_name": "幸运盲盒",
+      "original_gift_price": 5000
+    },
+    "broadcast_id": 0,
+    "coin_type": "gold",
+    "combo_resources_id": 1,
+    "combo_send": {
+      "action": "投喂",
+      "combo_id": "f3609c1b-d665-432f-b512-ca574f6f3c5e",
+      "combo_num": 1,
+      "gift_id": 35311,
+      "gift_name": "好运柚叶",
+      "gift_num": 1,
+      "send_master": null,
+      "uid": 35623247,
+      "uname": "不是Kennya"
+    },
+    "combo_stay_time": 5,
+    "combo_total_coin": 2500,
+    "crit_prob": 0,
+    "demarcation": 2,
+    "discount_price": 2500,
+    "dmscore": 714,
+    "draw": 0,
+    "effect": 0,
+    "effect_block": 0,
+    "effect_config": null,
+    "face": "[https://i2.hdslb.com/bfs/face/c21d3e894d4451bea6339c8563bcd64133447d80.jpg](https://i2.hdslb.com/bfs/face/c21d3e894d4451bea6339c8563bcd64133447d80.jpg)",
+    "face_effect": {},
+    "face_effect_id": 0,
+    "face_effect_type": 0,
+    "face_effect_v2": {
+      "id": 0,
+      "type": 0
+    },
+    "float_sc_resource_id": 0,
+    "giftId": 35311,
+    "giftName": "好运柚叶",
+    "giftType": 0,
+    "gift_info": {
+      "effect_id": 0,
+      "gif": "[https://i0.hdslb.com/bfs/live/5396725f058789056be3da27c66a570d1500c512.gif](https://i0.hdslb.com/bfs/live/5396725f058789056be3da27c66a570d1500c512.gif)",
+      "has_imaged_gift": 0,
+      "img_basic": "[https://s1.hdslb.com/bfs/live/792e1ae4e92cc33fa323970c55464ff6240959f0.png](https://s1.hdslb.com/bfs/live/792e1ae4e92cc33fa323970c55464ff6240959f0.png)",
+      "webp": "[https://i0.hdslb.com/bfs/live/0aa76c0b4ab72cc93a7e28012088fac1f53baf0d.webp](https://i0.hdslb.com/bfs/live/0aa76c0b4ab72cc93a7e28012088fac1f53baf0d.webp)"
+    },
+    "gift_tag": [],
+    "gold": 0,
+    "group_medal": null,
+    "guard_level": 3,
+    "is_first": true,
+    "is_join_receiver": false,
+    "is_naming": false,
+    "is_special_batch": 0,
+    "magnification": 1,
+    "medal_info": {
+      "anchor_roomid": 0,
+      "anchor_uname": "",
+      "guard_level": 3,
+      "icon_id": 0,
+      "is_lighted": 1,
+      "medal_color": 398668,
+      "medal_color_border": 6809855,
+      "medal_color_end": 6850801,
+      "medal_color_start": 398668,
+      "medal_level": 27,
+      "medal_name": "莓哈哟",
+      "special": "",
+      "target_id": 3546786748697162
+    },
+    "name_color": "#00D1F1",
+    "num": 1,
+    "original_gift_name": "",
+    "price": 2500,
+    "rcost": 89007,
+    "receive_user_info": {
+      "uid": 3706947196946570,
+      "uname": "早早眠-"
+    },
+    "receiver_uinfo": {
+      "base": {
+        "face": "[https://i2.hdslb.com/bfs/face/5579b93ac70dd2c2e1d33217aa747b0090dbb07d.jpg](https://i2.hdslb.com/bfs/face/5579b93ac70dd2c2e1d33217aa747b0090dbb07d.jpg)",
+        "name": "早早眠-",
+        "name_color_str": ""
+      },
+      "uid": 3706947196946570
+    },
+    "remain": 0,
+    "rnd": "4760043420746102272",
+    "send_master": null,
+    "sender_uinfo": {
+      "base": {
+        "face": "[https://i2.hdslb.com/bfs/face/c21d3e894d4451bea6339c8563bcd64133447d80.jpg](https://i2.hdslb.com/bfs/face/c21d3e894d4451bea6339c8563bcd64133447d80.jpg)",
+        "name": "不是Kennya"
+      },
+      "medal": {
+        "guard_level": 3,
+        "level": 26,
+        "name": "早早味"
+      },
+      "uid": 35623247
+    },
+    "silver": 0,
+    "super": 0,
+    "super_batch_gift_num": 1,
+    "super_gift_num": 1,
+    "svga_block": 0,
+    "switch": true,
+    "tag_image": "",
+    "tid": "4760043420746102272",
+    "timestamp": 1775827219,
+    "top_list": null,
+    "total_coin": 5000,
+    "uid": 35623247,
+    "uname": "不是Kennya",
+    "wealth_level": 24
+  },
+  "msg_id": "91512729688348672:1000:1000",
+  "p_is_ack": true,
+  "p_msg_type": 1,
+  "send_time": 1775827219928
 }
 ```
 </details>
