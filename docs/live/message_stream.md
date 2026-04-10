@@ -262,6 +262,7 @@ json格式
 - [进场或关注消息](#进场或关注消息)
 - [用户庆祝消息](#用户庆祝消息)
 - [醒目留言](#醒目留言)
+- [醒目留言日文翻译](#醒目留言日文翻译)
 - [送礼](#送礼)
 - [礼物星球点亮](#礼物星球点亮)
 - [通用系统广播弹幕](#通用系统广播弹幕)
@@ -288,7 +289,6 @@ json格式
 - [直播间在所属分区排名提升的祝福](#直播间在所属分区排名提升的祝福)
 - [直播间信息更改](#直播间信息更改)
 - [醒目留言按钮](#醒目留言按钮)
-- [醒目留言](#醒目留言)
 - [顶部横幅](#顶部横幅)
 - [下播的直播间](#下播的直播间)
 - [未知消息](#未知消息)
@@ -835,91 +835,188 @@ data字段
 
 #### 醒目留言
 
+当有人发送醒目留言 (Super Chat) 时接收到此消息
+
 json格式
 
-| 字段 | 类型  | 内容                  | 备注                                |
-| ---- |-----|---------------------|-----------------------------------|
-| cmd | str | "SUPER_CHAT_MESSAGE" | 用户发送醒目留言，内容则是"SUPER_CHAT_MESSAGE" |
-| data | obj | 醒目留言内容、发送者信息等       |                                   |
-| roomid | num | 直播间房间号（非短号          |                                   |
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd | str  | "SUPER_CHAT_MESSAGE" | 如果是醒目留言，内容则是"SUPER_CHAT_MESSAGE" |
+| data | obj | SC详细信息 | 见下方展开 |
+| is_report | bool | 待调查 | |
+| msg_id | str | 消息唯一ID | 格式通常为时间戳与随机数的组合组合拼接 |
+| p_is_ack | bool | 待调查 | |
+| p_msg_type | num | 待调查 | |
+| send_time | num | 发送时间戳 | 精确到毫秒 |
 
 data字段
 
-| 字段 | 类型  | 内容             |    备注    |
-| ---- |-----|----------------| --------- |
-| background_bottom_color | str | 待调查            | |
-| background_color | str | 待调查            | |
-| background_color_end | str | 待调查            | |
-| background_color_start | str | 待调查            | |
-| background_icon | str | 待调查            | |
-| background_image | str | 待调查            | |
-| background_price_color | str | 待调查            | |
-| color_point | num | 待调查            | |
-| dmscore | num | 待调查            | |
-| end_time | num | sc结束时间            | |
-| gift | obj | 礼物信息           | |
-| id | num | 待调查            | |
-| is_ranked | num | 待调查            | |
-| is_send_audit | num | 待调查            | |
-| medal_info | obj | SC发送用户佩戴的粉丝牌信息 | |
-| message | str | sc内容           | |
-| message_font_color | str | SC文本颜色         | |
-| message_trans | str | 机翻sc内容  | |
-| price | num | sc金额           | |
-| rate | num | 待调查            | |
-| start_time | num | sc开始时间            | |
-| time | num | sc持续时间         | |
-| token | num | 待调查            | |
-| trans_mark | num | 待调查            | |
-| ts | num | 待调查            | |
-| uid | num | 发送用户uid        | |
-| user_info | obj | 发送用户信息         | |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| background_bottom_color | str | 底部背景色 | 十六进制颜色码 |
+| background_color | str | 背景色 | 十六进制颜色码 |
+| background_color_end | str | 背景渐变结束色 | 十六进制颜色码 |
+| background_color_start | str | 背景渐变起始色 | 十六进制颜色码 |
+| background_icon | str | 背景图标 | 图片URL，若无则为空字符串 |
+| background_image | str | 背景图片 | 图片URL，若无则为空字符串 |
+| background_price_color | str | 价格背景色 | 十六进制颜色码 |
+| color_point | num | 待调查 | 例如0.7 |
+| dmscore | num | 弹幕积分 | |
+| end_time | num | 结束展示时间戳 | Unix时间戳，精确到秒 |
+| gift | obj | 礼物信息 | 见下方展开 |
+| group_medal | obj | 粉丝团勋章 | 见下方展开 |
+| id | num | SC唯一ID | |
+| is_mystery | bool | 是否神秘人 | |
+| is_ranked | num | 是否进榜 | |
+| is_send_audit | num | 是否发送审核 | |
+| medal_info | obj | 佩戴的粉丝勋章信息 | 见下方展开 |
+| message | str | 留言文本内容 | |
+| message_font_color | str | 留言字体颜色 | 十六进制颜色码 |
+| message_trans | str | 留言翻译内容 | 若无则为空字符串 |
+| price | num | SC价格 | 单位：人民币（元） |
+| rate | num | 兑换比例 | 通常为1000 |
+| start_time | num | 开始展示时间戳 | Unix时间戳，精确到秒 |
+| time | num | 展示时长 | 单位：秒 |
+| token | str | 校验Token | |
+| trans_mark | num | 翻译标记 | |
+| ts | num | 发送时间戳 | Unix时间戳，精确到秒 |
+| uid | num | 发送者UID | |
+| uinfo | obj | 发送者详细信息 | 见下方展开 |
+| user_info | obj | 发送者简要信息 | 见下方展开 |
 
-gift字段
+data的gift字段
 
-| 字段 | 类型  | 内容   | 备注   |
-| ---- |-----|------|------|
-| gift_id | num | 礼物id |      |
-| gift_name | str | 礼物名称 | 一般均为"醒目留言" |
-| num | num | 数量   |      |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| gift_id | num | 礼物ID | 醒目留言通常固定为12000 |
+| gift_name | str | 礼物名称 | 通常为"醒目留言" |
+| num | num | 数量 | 通常为1 |
 
-medal_info字段
+data的group_medal字段
 
-| 字段 | 类型  | 内容          | 备注   |
-| ---- |-----|-------------|------|
-| anchor_roomid | num | 房间号         | 包含短号 |
-| anchor_uname | str | 主播昵称        |  |
-| guard_level | num | 大航海等级       | 1: 总督 2: 提督 3:舰长 |
-| icon_id | num | 待调查         |  |
-| is_lighted | num | 待调查         |  |
-| medal_color | str | 待调查         |  |
-| medal_color_border | num | 待调查         |  |
-| medal_color_end | num | 待调查         |  |
-| medal_color_start | num | 待调查         |  |
-| medal_level | num | 粉丝牌等级       |  |
-| medal_name | str | 粉丝牌名称       |  |
-| special | str | 待调查         |  |
-| target_id | num | 粉丝牌对应的主播uid |  |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| is_lighted | num | 是否点亮 | |
+| medal_id | num | 勋章ID | |
+| name | str | 勋章名称 | |
 
-user_info字段
+data的medal_info字段
 
-| 字段 | 类型  | 内容    | 备注   |
-| ---- |-----|-------|------|
-| face | num | 用户头像  |  |
-| face_frame | num | 头像边框  |  |
-| guard_level | num | 大航海等级 | 1: 总督 2: 提督 3:舰长 |
-| is_main_vip | num | 待调查   |  |
-| is_svip | num | 待调查   |  |
-| is_vip | num | 待调查   |  |
-| level_color | str | 待调查   |  |
-| manager | num | 待调查   |  |
-| name_color | str | 待调查   |  |
-| title | str | 待调查   |  |
-| uname | str | 用户名称  |  |
-| user_level | num | 用户等级（1-6）   |  |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| anchor_roomid | num | 主播直播间ID | |
+| anchor_uname | str | 主播昵称 | |
+| guard_level | num | 舰队等级 | 0无，1总督，2提督，3舰长 |
+| icon_id | num | 图标ID | |
+| is_lighted | num | 是否点亮 | 1点亮，0未点亮 |
+| medal_color | str | 勋章颜色 | 十六进制颜色码 |
+| medal_color_border | num | 边框颜色 | 十进制数值 |
+| medal_color_end | num | 渐变结束色 | 十进制数值 |
+| medal_color_start | num | 渐变起始色 | 十进制数值 |
+| medal_level | num | 勋章等级 | |
+| medal_name | str | 勋章名称 | |
+| special | str | 特殊标识 | |
+| target_id | num | 勋章归属者UID | |
+
+data的user_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| face | str | 头像链接 | |
+| face_frame | str | 头像框链接 | |
+| guard_level | num | 舰队等级 | |
+| is_main_vip | num | 是否为主站VIP | |
+| is_svip | num | 是否为超级VIP | |
+| is_vip | num | 是否为VIP | |
+| level_color | str | 等级颜色 | |
+| manager | num | 是否房管 | 1是，0否 |
+| name_color | str | 昵称颜色 | |
+| title | str | 头衔 | |
+| uname | str | 用户昵称 | |
+| user_level | num | 用户等级 (UL) | |
+
+data的uinfo字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| base | obj | 基础资料 | 见下方展开 |
+| guard | obj | 舰队信息 | 见下方展开 |
+| guard_leader | obj | 舰队队长状态 | 若无则为null |
+| medal | obj | 粉丝勋章详情 | 见下方展开 |
+| title | obj | 称号信息 | 见下方展开 |
+| uhead_frame | obj | 头像框信息 | 若无则为null |
+| uid | num | 发送者UID | |
+| wealth | obj | 财富信息 | 若无则为null |
+
+data的uinfo的base字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| face | str | 头像链接 | |
+| is_mystery | bool | 是否神秘人 | |
+| name | str | 用户昵称 | |
+| name_color | num | 昵称颜色 | |
+| name_color_str | str | 昵称颜色字符串 | |
+| official_info | obj | 官方认证信息 | 见下方展开 |
+| origin_info | obj | 原始信息 | 见下方展开 |
+| risk_ctrl_info | obj | 风控信息 | 若无则为null |
+
+data的uinfo的base的official_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| desc | str | 认证描述 | |
+| role | num | 认证角色 | |
+| title | str | 认证头衔 | |
+| type | num | 认证类型 | |
+
+data的uinfo的base的origin_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| face | str | 原始头像链接 | |
+| name | str | 原始昵称 | |
+
+data的uinfo的guard字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| expired_str | str | 过期时间字符串 | |
+| level | num | 舰队等级 | |
+
+data的uinfo的medal字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| color | num | 颜色 | 十进制数值 |
+| color_border | num | 边框颜色 | 十进制数值 |
+| color_end | num | 渐变结束色 | 十进制数值 |
+| color_start | num | 渐变起始色 | 十进制数值 |
+| guard_icon | str | 舰队图标 | |
+| guard_level | num | 舰队等级 | |
+| honor_icon | str | 荣誉图标 | |
+| id | num | 勋章ID | |
+| is_light | num | 是否点亮 | 1点亮，0未点亮 |
+| level | num | 勋章等级 | |
+| name | str | 勋章名称 | |
+| ruid | num | 勋章归属者UID | |
+| score | num | 勋章积分 | |
+| typ | num | 勋章类型 | |
+| user_receive_count | num | 用户接收次数 | |
+| v2_medal_color_border | str | V2边框颜色 | 十六进制颜色码带透明度 |
+| v2_medal_color_end | str | V2渐变结束色 | |
+| v2_medal_color_level | str | V2等级颜色 | |
+| v2_medal_color_start | str | V2渐变起始色 | |
+| v2_medal_color_text | str | V2文本颜色 | |
+
+data的uinfo的title字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| old_title_css_id | str | 旧版称号CSS的ID | |
+| title_css_id | str | 称号CSS的ID | |
 
 <details>
-
 <summary>查看消息示例：</summary>
 
 ```json
@@ -931,64 +1028,421 @@ user_info字段
     "background_color_end": "#405D85",
     "background_color_start": "#3171D2",
     "background_icon": "",
-    "background_image": "https://i0.hdslb.com/bfs/live/a712efa5c6ebc67bafbe8352d3e74b820a00c13e.png",
+    "background_image": "",
     "background_price_color": "#7497CD",
     "color_point": 0.7,
-    "dmscore": 120,
-    "end_time": 1677069095,
+    "dmscore": 448,
+    "end_time": 1775820797,
     "gift": {
       "gift_id": 12000,
       "gift_name": "醒目留言",
       "num": 1
     },
-    "id": 6522809,
-    "is_ranked": 1,
+    "group_medal": {
+      "is_lighted": 0,
+      "medal_id": 0,
+      "name": ""
+    },
+    "id": 15164370,
+    "is_mystery": false,
+    "is_ranked": 0,
     "is_send_audit": 0,
     "medal_info": {
-      "anchor_roomid": 732,
-      "anchor_uname": "Asaki大人",
-      "guard_level": 3,
+      "anchor_roomid": 1964690546,
+      "anchor_uname": "鹿野大王official",
+      "guard_level": 0,
       "icon_id": 0,
       "is_lighted": 1,
-      "medal_color": "#1a544b",
-      "medal_color_border": 6809855,
-      "medal_color_end": 5414290,
-      "medal_color_start": 1725515,
-      "medal_level": 21,
-      "medal_name": "ASAKI",
+      "medal_color": "#be6686",
+      "medal_color_border": 12478086,
+      "medal_color_end": 12478086,
+      "medal_color_start": 12478086,
+      "medal_level": 15,
+      "medal_name": "鹿人A",
       "special": "",
-      "target_id": 194484313
+      "target_id": 1396521412
     },
-    "message": "猪播完美预测自己第一个死，这就是鹅鸭杀高玩吗",
+    "message": "点歌，勇气大爆发",
     "message_font_color": "#A3F6FF",
     "message_trans": "",
     "price": 30,
     "rate": 1000,
-    "start_time": 1677069035,
+    "start_time": 1775820737,
     "time": 60,
-    "token": "7BED5681",
+    "token": "A305BEBA",
     "trans_mark": 0,
-    "ts": 1677069035,
-    "uid": 294094150,
+    "ts": 1775820737,
+    "uid": 102581857,
+    "uinfo": {
+      "base": {
+        "face": "[https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg](https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg)",
+        "is_mystery": false,
+        "name": "springtimes",
+        "name_color": 0,
+        "name_color_str": "#666666",
+        "official_info": {
+          "desc": "",
+          "role": 0,
+          "title": "",
+          "type": -1
+        },
+        "origin_info": {
+          "face": "[https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg](https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg)",
+          "name": "springtimes"
+        },
+        "risk_ctrl_info": null
+      },
+      "guard": {
+        "expired_str": "",
+        "level": 0
+      },
+      "guard_leader": null,
+      "medal": {
+        "color": 12478086,
+        "color_border": 12478086,
+        "color_end": 12478086,
+        "color_start": 12478086,
+        "guard_icon": "",
+        "guard_level": 0,
+        "honor_icon": "",
+        "id": 0,
+        "is_light": 1,
+        "level": 15,
+        "name": "鹿人A",
+        "ruid": 1396521412,
+        "score": 559,
+        "typ": 0,
+        "user_receive_count": 0,
+        "v2_medal_color_border": "#C770A499",
+        "v2_medal_color_end": "#C770A499",
+        "v2_medal_color_level": "#C770A4E6",
+        "v2_medal_color_start": "#C770A499",
+        "v2_medal_color_text": "#FFFFFF"
+      },
+      "title": {
+        "old_title_css_id": "",
+        "title_css_id": ""
+      },
+      "uhead_frame": null,
+      "uid": 102581857,
+      "wealth": null
+    },
     "user_info": {
-      "face": "https://i1.hdslb.com/bfs/face/7a11b48e0a3055e220fa8b4c7d938cd4bcac2577.jpg",
-      "face_frame": "https://i0.hdslb.com/bfs/live/80f732943cc3367029df65e267960d56736a82ee.png",
-      "guard_level": 3,
+      "face": "[https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg](https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg)",
+      "face_frame": "",
+      "guard_level": 0,
       "is_main_vip": 1,
       "is_svip": 0,
       "is_vip": 0,
       "level_color": "#969696",
       "manager": 0,
-      "name_color": "#00D1F1",
-      "title": "0",
-      "uname": "界原虚",
-      "user_level": 6
+      "name_color": "#666666",
+      "title": "",
+      "uname": "springtimes",
+      "user_level": 7
     }
   },
-  "roomid": 6154037
+  "is_report": true,
+  "msg_id": "91505932605909505:1000:1000",
+  "p_is_ack": true,
+  "p_msg_type": 1,
+  "send_time": 1775820737725
 }
 ```
+</details>
 
+#### 醒目留言日文翻译
+
+当收到醒目留言时，系统紧接着推送的包含日文机器翻译的该条留言信息。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd | str  | "SUPER_CHAT_MESSAGE_JPN" | 如果是醒目留言日文版，内容则是"SUPER_CHAT_MESSAGE_JPN" |
+| data | obj | SC详细信息 | 见下方展开 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| background_bottom_color | str | 底部背景色 | 十六进制颜色码 |
+| background_color | str | 背景色 | 十六进制颜色码 |
+| background_icon | str | 背景图标 | 图片URL，若无则为空字符串 |
+| background_image | str | 背景图片 | 图片URL，若无则为空字符串 |
+| background_price_color | str | 价格背景色 | 十六进制颜色码 |
+| end_time | num | 结束展示时间戳 | Unix时间戳，精确到秒 |
+| gift | obj | 礼物信息 | 见下方展开 |
+| group_medal | obj | 粉丝团勋章 | 见下方展开 |
+| id | num | SC唯一ID | 与原SC消息的ID一致 |
+| is_mystery | bool | 是否神秘人 | |
+| is_ranked | num | 是否进榜 | |
+| medal_info | obj | 佩戴的粉丝勋章信息 | 见下方展开 |
+| message | str | 原留言文本内容 | |
+| message_jpn | str | 日文翻译留言 | 机器翻译出的日文内容 |
+| price | num | SC价格 | 单位：人民币（元） |
+| rate | num | 兑换比例 | 通常为1000 |
+| start_time | num | 开始展示时间戳 | Unix时间戳，精确到秒 |
+| time | num | 展示时长 | 单位：秒 |
+| token | str | 校验Token | |
+| ts | num | 发送时间戳 | Unix时间戳，精确到秒 |
+| uid | num | 发送者UID | |
+| uinfo | obj | 发送者详细信息 | 见下方展开 |
+| user_info | obj | 发送者简要信息 | 见下方展开 |
+
+data的gift字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| gift_id | num | 礼物ID | 醒目留言通常固定为12000 |
+| gift_name | str | 礼物名称 | 通常为"醒目留言" |
+| num | num | 数量 | 通常为1 |
+
+data的group_medal字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| is_lighted | num | 是否点亮 | |
+| medal_id | num | 勋章ID | |
+| name | str | 勋章名称 | |
+
+data的medal_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| anchor_roomid | num | 主播直播间ID | |
+| anchor_uname | str | 主播昵称 | |
+| guard_level | num | 舰队等级 | 0无，1总督，2提督，3舰长 |
+| icon_id | num | 图标ID | |
+| is_lighted | num | 是否点亮 | 1点亮，0未点亮 |
+| medal_color | str | 勋章颜色 | 十六进制颜色码 |
+| medal_color_border | num | 边框颜色 | 十进制数值 |
+| medal_color_end | num | 渐变结束色 | 十进制数值 |
+| medal_color_start | num | 渐变起始色 | 十进制数值 |
+| medal_level | num | 勋章等级 | |
+| medal_name | str | 勋章名称 | |
+| special | str | 特殊标识 | |
+| target_id | num | 勋章归属者UID | |
+
+data的user_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| face | str | 头像链接 | |
+| face_frame | str | 头像框链接 | |
+| guard_level | num | 舰队等级 | |
+| is_main_vip | num | 是否为主站VIP | |
+| is_svip | num | 是否为超级VIP | |
+| is_vip | num | 是否为VIP | |
+| level_color | str | 等级颜色 | |
+| manager | num | 是否房管 | 1是，0否 |
+| name_color | str | 昵称颜色 | |
+| title | str | 头衔 | |
+| uname | str | 用户昵称 | |
+| user_level | num | 用户等级 (UL) | |
+
+data的uinfo字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| base | obj | 基础资料 | 见下方展开 |
+| guard | obj | 舰队信息 | 见下方展开 |
+| guard_leader | obj | 舰队队长状态 | 若无则为null |
+| medal | obj | 粉丝勋章详情 | 见下方展开 |
+| title | obj | 称号信息 | 见下方展开 |
+| uhead_frame | obj | 头像框信息 | 若无则为null |
+| uid | num | 发送者UID | |
+| wealth | obj | 财富信息 | 若无则为null |
+
+data的uinfo的base字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| face | str | 头像链接 | |
+| is_mystery | bool | 是否神秘人 | |
+| name | str | 用户昵称 | |
+| name_color | num | 昵称颜色 | |
+| name_color_str | str | 昵称颜色字符串 | |
+| official_info | obj | 官方认证信息 | 见下方展开 |
+| origin_info | obj | 原始信息 | 见下方展开 |
+| risk_ctrl_info | obj | 风控信息 | 若无则为null |
+
+data的uinfo的base的official_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| desc | str | 认证描述 | |
+| role | num | 认证角色 | |
+| title | str | 认证头衔 | |
+| type | num | 认证类型 | |
+
+data的uinfo的base的origin_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| face | str | 原始头像链接 | |
+| name | str | 原始昵称 | |
+
+data的uinfo的guard字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| expired_str | str | 过期时间字符串 | |
+| level | num | 舰队等级 | |
+
+data的uinfo的medal字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| color | num | 颜色 | 十进制数值 |
+| color_border | num | 边框颜色 | 十进制数值 |
+| color_end | num | 渐变结束色 | 十进制数值 |
+| color_start | num | 渐变起始色 | 十进制数值 |
+| guard_icon | str | 舰队图标 | |
+| guard_level | num | 舰队等级 | |
+| honor_icon | str | 荣誉图标 | |
+| id | num | 勋章ID | |
+| is_light | num | 是否点亮 | 1点亮，0未点亮 |
+| level | num | 勋章等级 | |
+| name | str | 勋章名称 | |
+| ruid | num | 勋章归属者UID | |
+| score | num | 勋章积分 | |
+| typ | num | 勋章类型 | |
+| user_receive_count | num | 用户接收次数 | |
+| v2_medal_color_border | str | V2边框颜色 | 十六进制颜色码带透明度 |
+| v2_medal_color_end | str | V2渐变结束色 | |
+| v2_medal_color_level | str | V2等级颜色 | |
+| v2_medal_color_start | str | V2渐变起始色 | |
+| v2_medal_color_text | str | V2文本颜色 | |
+
+data的uinfo的title字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| old_title_css_id | str | 旧版称号CSS的ID | |
+| title_css_id | str | 称号CSS的ID | |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "SUPER_CHAT_MESSAGE_JPN",
+  "data": {
+    "id": 15164370,
+    "uid": 102581857,
+    "price": 30,
+    "rate": 1000,
+    "message": "点歌，勇气大爆发",
+    "message_jpn": "歌を注文して、勇気が爆発しました",
+    "is_ranked": 0,
+    "background_image": "",
+    "background_color": "#EDF5FF",
+    "background_icon": "",
+    "background_price_color": "#7497CD",
+    "background_bottom_color": "#2A60B2",
+    "ts": 1775820738,
+    "token": "B3522EB6",
+    "medal_info": {
+      "icon_id": 0,
+      "target_id": 1396521412,
+      "special": "",
+      "anchor_uname": "鹿野大王official",
+      "anchor_roomid": 1964690546,
+      "medal_level": 15,
+      "medal_name": "鹿人A",
+      "medal_color": "#be6686",
+      "medal_color_start": 12478086,
+      "medal_color_end": 12478086,
+      "medal_color_border": 12478086,
+      "is_lighted": 1,
+      "guard_level": 0
+    },
+    "user_info": {
+      "uname": "springtimes",
+      "face": "[https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg](https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg)",
+      "face_frame": "",
+      "name_color": "#666666",
+      "guard_level": 0,
+      "user_level": 7,
+      "level_color": "#969696",
+      "is_vip": 0,
+      "is_svip": 0,
+      "is_main_vip": 1,
+      "title": "",
+      "manager": 0
+    },
+    "time": 59,
+    "start_time": 1775820737,
+    "end_time": 1775820797,
+    "gift": {
+      "num": 1,
+      "gift_id": 12000,
+      "gift_name": "醒目留言"
+    },
+    "group_medal": {
+      "medal_id": 0,
+      "name": "",
+      "is_lighted": 0
+    },
+    "is_mystery": false,
+    "uinfo": {
+      "uid": 102581857,
+      "base": {
+        "name": "springtimes",
+        "face": "[https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg](https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg)",
+        "name_color": 0,
+        "is_mystery": false,
+        "risk_ctrl_info": null,
+        "origin_info": {
+          "name": "springtimes",
+          "face": "[https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg](https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg)"
+        },
+        "official_info": {
+          "role": 0,
+          "title": "",
+          "desc": "",
+          "type": -1
+        },
+        "name_color_str": "#666666"
+      },
+      "medal": {
+        "name": "鹿人A",
+        "level": 15,
+        "color_start": 12478086,
+        "color_end": 12478086,
+        "color_border": 12478086,
+        "color": 12478086,
+        "id": 0,
+        "typ": 0,
+        "is_light": 1,
+        "ruid": 1396521412,
+        "guard_level": 0,
+        "score": 559,
+        "guard_icon": "",
+        "honor_icon": "",
+        "v2_medal_color_start": "#C770A499",
+        "v2_medal_color_end": "#C770A499",
+        "v2_medal_color_border": "#C770A499",
+        "v2_medal_color_text": "#FFFFFF",
+        "v2_medal_color_level": "#C770A4E6",
+        "user_receive_count": 0
+      },
+      "wealth": null,
+      "title": {
+        "old_title_css_id": "",
+        "title_css_id": ""
+      },
+      "guard": {
+        "level": 0,
+        "expired_str": ""
+      },
+      "uhead_frame": null,
+      "guard_leader": null
+    }
+  }
+}
+```
 </details>
 
 #### 送礼
