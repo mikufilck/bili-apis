@@ -283,6 +283,9 @@ json格式
 - [直播间发红包弹幕](#直播间发红包弹幕)
 - [直播间红包](#直播间红包)
 - [直播间抢到红包的用户](#直播间抢到红包的用户)
+- [天选时刻开始](#天选时刻开始)
+- [天选时刻/活动专属弹幕聚合](#天选时刻/活动专属弹幕聚合)
+- [天选时刻开奖](#天选时刻开奖)
 - [直播间看过人数](#直播间看过人数)
 - [用户进场特效](#用户进场特效)
 - [直播间在所属分区的排名改变](#直播间在所属分区的排名改变)
@@ -3689,7 +3692,343 @@ awards字段
 ```
 </details>
 
+#### 天选时刻开始
 
+当主播在直播间发起“天选时刻”抽奖时接收到此消息。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "ANCHOR_LOT_START" | 当天选时刻抽奖开始时为"ANCHOR_LOT_START" |
+| data | obj  | 天选时刻的详细配置与奖品信息 | 见下方展开 |
+| msg_id | str | 消息唯一ID | |
+| p_is_ack | bool | 待调查 | |
+| send_time | num | 发送时间戳 | 精确到毫秒 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| asset_icon | str | 资产图标URL | 通常为抽奖包或奖品的图片 |
+| asset_icon_webp | str | webp格式图标URL | |
+| award_content | str | 奖品内容 | 若无则为空字符串 |
+| award_image | str | 奖品图片URL | |
+| award_name | str | 奖品名称 | 例如"情书" |
+| award_num | num | 奖品总数量 | |
+| award_per_capita | num | 人均可获奖数 | 通常为1 |
+| award_price_text | str | 奖品价值文本 | 例如"价值52电池" |
+| award_type | num | 奖品类型 | 待调查（例如1可能代表虚拟礼物） |
+| break_up_time | num | 打断时间 | 待调查 |
+| cur_gift_num | num | 当前收到的礼物数 | 开启需要指定礼物的抽奖时有效 |
+| current_time | num | 服务器当前时间戳 | 精确到秒 |
+| danmu | str | 参与弹幕文本 | 用户参与抽奖时自动发送的弹幕内容 |
+| danmu_new | array | 参与弹幕新结构 | 见下方展开 |
+| danmu_type | num | 弹幕类型 | 待调查 |
+| gift_id | num | 参与需赠送的礼物ID | 若为0则不需要送礼 |
+| gift_name | str | 参与需赠送的礼物名 | |
+| gift_num | num | 参与需赠送的礼物数量 | |
+| gift_price | num | 礼物价格 | |
+| goaway_time | num | UI消失时间 | 待调查 |
+| goods_id | num | 物品ID | 常量如-99998 |
+| icon_name | str | 图标名称 | 通常为"天选福袋" |
+| id | num | 天选时刻唯一ID | 该场抽奖的唯一标识 |
+| is_broadcast | num | 是否全站广播 | 待调查 |
+| join_total | num | 参与总人数 | |
+| join_type | num | 参与类型 | 待调查 |
+| join_type_text | str | 参与类型文本 | |
+| lot_status | num | 抽奖状态 | 通常0代表进行中 |
+| max_time | num | 最大持续时间 | 单位为秒 |
+| require_text | str | 参与条件文本 | 例如"关注主播" |
+| require_type | num | 参与条件类型 | 例如1为关注 |
+| require_value | num | 条件阈值 | |
+| room_id | num | 房间ID | 发起抽奖的直播间真实ID |
+| send_gift_ensure | num | 待调查 | |
+| show_panel | num | 是否显示面板 | 1显示，0不显示 |
+| sponsor_title | str | 赞助商头衔 | |
+| start_dont_popup | num | 开始时不弹窗 | 待调查 |
+| status | num | 当前状态 | |
+| time | num | 剩余时间 | 单位为秒 |
+| url | str | H5页面链接 | 包含UI参数的活动页面 |
+| web_url | str | Web端页面链接 | 基础活动页面 |
+
+data的danmu_new数组中的对象
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| danmu | str | 参与弹幕文本 | |
+| danmu_view | str | 弹幕展示样式 | |
+| reject | bool | 待调查 | 通常为false |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "ANCHOR_LOT_START",
+  "data": {
+    "asset_icon": "[https://i0.hdslb.com/bfs/live/cde7d1a68c0d10c6aa283c4c24b968578fa45d75.png](https://i0.hdslb.com/bfs/live/cde7d1a68c0d10c6aa283c4c24b968578fa45d75.png)",
+    "asset_icon_webp": "[https://i0.hdslb.com/bfs/live/19b8a1b80f71af777ec615b329549224941b7b6c.webp](https://i0.hdslb.com/bfs/live/19b8a1b80f71af777ec615b329549224941b7b6c.webp)",
+    "award_content": "",
+    "award_image": "[https://s1.hdslb.com/bfs/live/14dafbf217618f0931c08897e0b3eefc00d0da22.png](https://s1.hdslb.com/bfs/live/14dafbf217618f0931c08897e0b3eefc00d0da22.png)",
+    "award_name": "情书",
+    "award_num": 1,
+    "award_per_capita": 1,
+    "award_price_text": "价值52电池",
+    "award_type": 1,
+    "break_up_time": 0,
+    "cur_gift_num": 0,
+    "current_time": 1775820389,
+    "danmu": "加入粉丝团，参与天选时刻啦！",
+    "danmu_new": [
+      {
+        "danmu": "加入粉丝团，参与天选时刻啦！",
+        "danmu_view": "",
+        "reject": false
+      }
+    ],
+    "danmu_type": 0,
+    "gift_id": 0,
+    "gift_name": "",
+    "gift_num": 0,
+    "gift_price": 0,
+    "goaway_time": 180,
+    "goods_id": -99998,
+    "icon_name": "天选福袋",
+    "id": 14656751,
+    "is_broadcast": 1,
+    "join_total": 0,
+    "join_type": 0,
+    "join_type_text": "",
+    "lot_status": 0,
+    "max_time": 900,
+    "require_text": "关注主播",
+    "require_type": 1,
+    "require_value": 0,
+    "room_id": 1964690546,
+    "send_gift_ensure": 0,
+    "show_panel": 1,
+    "sponsor_title": "",
+    "start_dont_popup": 0,
+    "status": 1,
+    "time": 899,
+    "url": "[https://live.bilibili.com/p/html/live-lottery/lottery-user.html?is_live_half_webview=1&hybrid_biz=live-lottery-anchor&hybrid_half_ui=1,3,100p,100p,0,0,30,0,0,1;2,2,375,100p,0,0,30,0,0,1;3,3,100p,100p,0,0,30,0,0,1;4,5,100p,100p,0,0,30,0,0,1;5,5,100p,100p,0,0,30,0,0,1;6,5,100p,100p,0,0,30,0,0,1;7,5,100p,100p,0,0,30,0,0,1;8,5,100p,100p,0,0,30,0,0,1](https://live.bilibili.com/p/html/live-lottery/lottery-user.html?is_live_half_webview=1&hybrid_biz=live-lottery-anchor&hybrid_half_ui=1,3,100p,100p,0,0,30,0,0,1;2,2,375,100p,0,0,30,0,0,1;3,3,100p,100p,0,0,30,0,0,1;4,5,100p,100p,0,0,30,0,0,1;5,5,100p,100p,0,0,30,0,0,1;6,5,100p,100p,0,0,30,0,0,1;7,5,100p,100p,0,0,30,0,0,1;8,5,100p,100p,0,0,30,0,0,1)",
+    "web_url": "[https://live.bilibili.com/p/html/live-lottery/lottery-user.html](https://live.bilibili.com/p/html/live-lottery/lottery-user.html)"
+  },
+  "msg_id": "91505569478772224:1:1000",
+  "p_is_ack": true,
+  "send_time": 1775820391420
+}
+```
+</details>
+
+#### 天选时刻/活动专属弹幕聚合
+
+当天选时刻等活动期间，直播间短时间内出现大量相同的参与口令弹幕时，系统会专门发送此消息将口令折叠聚合以更新 UI 上的数量。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "DANMU_AGGREGATION" | 指示更新活动专属聚合弹幕的状态 |
+| data | obj  | 聚合弹幕的具体信息和数量 | 见下方展开 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| activity_identity | str | 活动标识 | 对应具体活动的ID，例如天选时刻的 `id` |
+| activity_source | num | 活动来源 | 待调查（通常为1） |
+| aggregation_cycle | num | 聚合周期 | 待调查 |
+| aggregation_icon | str | 聚合UI显示的图标 | 对应活动的图标链接 |
+| aggregation_num | num | 聚合的弹幕数量 | 表示这段时间内有多少人发送了相同的这条弹幕口令 |
+| broadcast_msg_type | num | 广播消息类型 | 待调查（通常为0） |
+| msg | str | 被聚合的弹幕文本 | 例如"加入粉丝团，参与天选时刻啦！" |
+| show_rows | num | 显示行数 | 聚合UI占据的行数 |
+| show_time | num | 显示时间 | 待调查 |
+| timestamp | num | 时间戳 | 服务器发送该数据包的Unix时间戳，精确到秒 |
+
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "DANMU_AGGREGATION",
+  "data": {
+    "activity_identity": "14656751",
+    "activity_source": 1,
+    "aggregation_cycle": 1,
+    "aggregation_icon": "[https://i0.hdslb.com/bfs/live/c8fbaa863bf9099c26b491d06f9efe0c20777721.png](https://i0.hdslb.com/bfs/live/c8fbaa863bf9099c26b491d06f9efe0c20777721.png)",
+    "aggregation_num": 6,
+    "broadcast_msg_type": 0,
+    "msg": "加入粉丝团，参与天选时刻啦！",
+    "show_rows": 1,
+    "show_time": 2,
+    "timestamp": 1775820481
+  }
+}
+```
+</details>
+
+#### 天选时刻开奖
+
+当天选时刻抽奖倒计时结束，公布中奖结果时接收到此消息。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "ANCHOR_LOT_AWARD" | 指示天选时刻已开奖 |
+| data | obj  | 中奖结果及中奖用户名单信息 | 见下方展开 |
+| msg_id | str | 消息唯一ID | |
+| p_is_ack | bool | 待调查 | |
+| send_time | num | 发送时间戳 | 精确到毫秒 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| award_dont_popup | num | 是否不弹窗 | 待调查（通常为1） |
+| award_image | str | 奖品图片URL | |
+| award_name | str | 奖品名称 | |
+| award_num | num | 奖品总数量 | |
+| award_per_capita | num | 人均可获奖数 | |
+| award_price_text | str | 奖品价值文本 | 例如"价值52电池" |
+| award_type | num | 奖品类型 | 待调查 |
+| award_users | array | 中奖用户列表 | 包含所有抽中该奖品的用户信息，见下方展开 |
+| id | num | 天选时刻唯一ID | 与发起抽奖时的ID一致 |
+| lot_status | num | 抽奖状态 | 通常2代表已开奖/结束 |
+| ruid | num | 发起抽奖的主播UID | |
+| sponsor_title | str | 赞助商头衔 | |
+| url | str | H5页面链接 | |
+| web_url | str | Web端页面链接 | |
+
+data的award_users数组中的对象
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| bag_id | num | 背包ID | 奖品发放到中奖用户背包的ID凭证 |
+| color | num | 颜色 | 待调查 |
+| face | str | 中奖者头像URL | |
+| gift_id | num | 获得的奖品/礼物ID | |
+| is_mystery | bool | 是否神秘人 | |
+| level | num | 待调查 | |
+| num | num | 中奖数量 | |
+| uid | num | 中奖者UID | |
+| uinfo | obj | 中奖者详细资料 | 包含头像、认证等全套数据，见下方展开 |
+| uname | str | 中奖者昵称 | |
+
+data的award_users的uinfo字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| uid | num | 用户UID | |
+| base | obj | 基础资料 | 见下方展开 |
+| medal | obj | 勋章详情 | 若无则为null |
+| wealth | obj | 财富信息 | 若无则为null |
+| title | obj | 称号信息 | 若无则为null |
+| guard | obj | 舰队信息 | 若无则为null |
+| uhead_frame | obj | 头像框信息 | 若无则为null |
+| guard_leader | obj | 舰队队长状态 | 若无则为null |
+
+data的award_users的uinfo的base字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| name | str | 用户昵称 | |
+| face | str | 头像链接 | |
+| name_color | num | 昵称颜色 | |
+| is_mystery | bool | 是否神秘人 | |
+| risk_ctrl_info | obj | 风控信息 | 若无则为null |
+| origin_info | obj | 原始信息 | 见下方展开 |
+| official_info | obj | 认证信息 | 见下方展开 |
+| name_color_str | str | 昵称颜色字符串 | |
+
+data的award_users的uinfo的base的origin_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| name | str | 原始昵称 | |
+| face | str | 原始头像链接 | |
+
+data的award_users的uinfo的base的official_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| role | num | 角色类型 | |
+| title | str | 认证头衔 | |
+| desc | str | 认证描述 | |
+| type | num | 认证类型 | |
+
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "ANCHOR_LOT_AWARD",
+  "data": {
+    "award_dont_popup": 1,
+    "award_image": "[https://s1.hdslb.com/bfs/live/14dafbf217618f0931c08897e0b3eefc00d0da22.png](https://s1.hdslb.com/bfs/live/14dafbf217618f0931c08897e0b3eefc00d0da22.png)",
+    "award_name": "情书",
+    "award_num": 1,
+    "award_per_capita": 1,
+    "award_price_text": "价值52电池",
+    "award_type": 1,
+    "award_users": [
+      {
+        "bag_id": 14519839,
+        "color": 0,
+        "face": "[https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg](https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg)",
+        "gift_id": 31250,
+        "is_mystery": false,
+        "level": 0,
+        "num": 1,
+        "uid": 102581857,
+        "uinfo": {
+          "base": {
+            "face": "[https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg](https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg)",
+            "is_mystery": false,
+            "name": "springtimes",
+            "name_color": 0,
+            "name_color_str": "",
+            "official_info": {
+              "desc": "",
+              "role": 0,
+              "title": "",
+              "type": -1
+            },
+            "origin_info": {
+              "face": "[https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg](https://i1.hdslb.com/bfs/face/291ec0601869615a6a3408d48549c61bba590e28.jpg)",
+              "name": "springtimes"
+            },
+            "risk_ctrl_info": null
+          },
+          "guard": null,
+          "guard_leader": null,
+          "medal": null,
+          "title": null,
+          "uhead_frame": null,
+          "uid": 102581857,
+          "wealth": null
+        },
+        "uname": "springtimes"
+      }
+    ],
+    "id": 14656751,
+    "lot_status": 2,
+    "ruid": 1396521412,
+    "sponsor_title": "",
+    "url": "[https://live.bilibili.com/p/html/live-lottery/lottery-user.html?is_live_half_webview=1&hybrid_biz=live-lottery-anchor&hybrid_half_ui=1,3,100p,100p,0,0,30,0,0,1;2,2,375,100p,0,0,30,0,0,1;3,3,100p,100p,0,0,30,0,0,1;4,5,100p,100p,0,0,30,0,0,1;5,5,100p,100p,0,0,30,0,0,1;6,5,100p,100p,0,0,30,0,0,1;7,5,100p,100p,0,0,30,0,0,1;8,5,100p,100p,0,0,30,0,0,1](https://live.bilibili.com/p/html/live-lottery/lottery-user.html?is_live_half_webview=1&hybrid_biz=live-lottery-anchor&hybrid_half_ui=1,3,100p,100p,0,0,30,0,0,1;2,2,375,100p,0,0,30,0,0,1;3,3,100p,100p,0,0,30,0,0,1;4,5,100p,100p,0,0,30,0,0,1;5,5,100p,100p,0,0,30,0,0,1;6,5,100p,100p,0,0,30,0,0,1;7,5,100p,100p,0,0,30,0,0,1;8,5,100p,100p,0,0,30,0,0,1)",
+    "web_url": "[https://live.bilibili.com/p/html/live-lottery/lottery-user.html](https://live.bilibili.com/p/html/live-lottery/lottery-user.html)"
+  },
+  "msg_id": "91506511568756224:1:1000",
+  "p_is_ack": true,
+  "send_time": 1775821289867
+}
+```
+</details>
 
 #### 直播间看过人数
 
