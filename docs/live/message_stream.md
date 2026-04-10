@@ -259,7 +259,7 @@ json格式
 ---
 
 - [弹幕](#弹幕)
-- [进场或关注消息](#进场或关注消息)
+- [进场、关注或分享消息](#进场、关注或分享消息)
 - [用户庆祝消息](#用户庆祝消息)
 - [醒目留言](#醒目留言)
 - [醒目留言日文翻译](#醒目留言日文翻译)
@@ -676,37 +676,140 @@ data.data字段 (将字符串反序列化后的内部对象)
 
 </details>
 
-#### 进场或关注消息
+#### 进场、关注或分享消息
 
-B站目前正在逐步将普通用户的互动消息从 `INTERACT_WORD` 迁移至 `INTERACT_WORD_V2`。
-在新版协议中，为了压缩数据，核心的用户信息被序列化成了 **Protobuf 二进制流**，并经过 Base64 编码后塞入了 `pb` 字段中。
+B站目前已将普通用户的互动消息（进场、关注、分享等）全面迁移至 `INTERACT_WORD_V2`。
+为了在直播间高并发时极大地压缩数据体积，核心的用户身份信息和互动动作被序列化成了 **Protobuf 二进制流**，并经过 Base64 编码后统一打包在 `pb` 字段中。外层仅保留用于渲染权重的积分字段。
 
 json格式
 
-| 字段 | 类型 |   内容  |    备注   |
+| 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd  | str | "INTERACT_WORD_V2" | 用户进房、关注直播间时触发。 |
-| data | obj | 包含加密的 pb 数据流 | |
+| cmd  | str  | "INTERACT_WORD_V2" | 用户进入、关注、分享直播间时统一触发此指令 |
+| data | obj  | 包含展示权重和加密的 pb 数据流 | 见下方展开 |
 
 data字段
 
-| 字段 | 类型 |   内容  |    备注   |
-| ---- | ---- | ------ | --------- |
-| dmscore | num | 待调查 | |
-| pb | str | Base64 编码的 Protobuf 数据 | **核心字段，包含真正的用户名和交互类型。** |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| dmscore | num | 弹幕积分/展示权重 | 系统根据用户等级和行为价值动态打分。分数越高代表用户越尊贵或行为越重要（如分享/关注的分数通常远高于普通进场）。常用于客户端高并发防刷屏时的丢弃策略与优先渲染。 |
+| pb | str | Base64编码的Protobuf数据 | **【核心字段】包含真正的交互详情**。开发者需要先进行 Base64 解码，然后按 Protobuf 结构反序列化，才能拿到用户名、动作类型等真实数据。 |
+
+---
+
+#### `pb` 字段解码后的内部结构 (Protobuf)
+
+开发者解码 `pb` 字段后，会得到以下结构的对象。依靠内部的 `msg_type` 字段，即可判断该用户究竟执行了什么动作。
+
+**核心互动类型 (`msg_type`) 枚举：**
+* **`1`** : **进入直播间 (Enter)**。如果数据包含 `relation_tail` (第23号字段)，则代表这是“新粉进房”，客户端可据此渲染“近期关注了你”等特殊提示。
+* **`2`** : **关注直播间 (Follow)**。通常伴随庞大的 `uinfo` 数据（包含粉丝牌、舰队等所有详细配置）。
+* **`3`** : **分享直播间 (Share)**。用户将直播间分享到其他平台时触发。
+
+反序列化后的内部关键字段对照表：
+
+| 字段编号 (Tag) | 字段名 | 数据类型 | 备注 |
+| :--- | :--- | :--- | :--- |
+| 1 | `uid` | uint64 | 用户的 UID |
+| 2 | `uname` | string | 用户的昵称 |
+| 3 | `uname_color` | string | 昵称颜色的十六进制文本 |
+| 4 | `identities` | array (uint64) | 用户身份组标识 |
+| **5** | **`msg_type`** | **uint64** | **互动类型（1:进场, 2:关注, 3:分享）** |
+| 6 | `roomid` | uint64 | 当前直播间的房间 ID |
+| 7 | `timestamp` | uint64 | 事件发生的时间戳 (秒级) |
+| 8 | `score` | uint64 | 互动分数/权重（与外层dmscore相关） |
+| 9 | `fans_medal` | object | 粉丝勋章详情 |
+| 12 | `contribution` | object | 贡献度信息 |
+| 19 | `contribution_v2` | object | 新版贡献度信息 |
+| 20 | `group_medal` | object | 粉丝团勋章简要信息 |
+| 21 | `is_mystery` | bool | 是否为神秘人 |
+| **22** | **`uinfo`** | **object** | **极其详细的用户资料（包含头像、舰队、实名认证等结构，高等级用户进场或关注时附带）** |
+| **23** | **`relation_tail`** | **object** | **主播关系尾缀（通常在 `msg_type=1` 时附加，用于提示主播“该用户近期关注了你”）** |
+
+---
 
 <details>
-<summary>查看消息示例：</summary>
+<summary>展开查看完整的 .proto 定义文件（供代码直接使用）：</summary>
 
-```json
+开发者可将以下代码保存为 `INTERACT_WORD_V2.proto`，并使用 `protoc` 工具生成对应语言的解析类库，直接对解码后的 Base64 字节流进行反序列化。
+
+```protobuf
+syntax = "proto3";
+
+message InteractWordV2 {
+    uint64 uid = 1;
+    string uname = 2;
+    string uname_color = 3;
+    repeated uint64 identities = 4;
+    uint64 msg_type = 5;       // 核心：1进场，2关注，3分享
+    uint64 roomid = 6;
+    uint64 timestamp = 7;
+    uint64 score = 8;
+    FansMedalInfo fans_medal = 9;
+    uint64 is_spread = 10;
+    string spread_info = 11;
+    ContributionInfo contribution = 12;
+    string spread_desc = 13;
+    uint64 tail_icon = 14;
+    uint64 trigger_time = 15;
+    uint64 privilege_type = 16;
+    uint64 core_user_type = 17;
+    string tail_text = 18;
+    ContributionInfoV2 contribution_v2 = 19;
+    GroupMedalBrief group_medal = 20;
+    bool is_mystery = 21;
+    UserInfo uinfo = 22;      // 包含头像等详细信息
+    UserAnchorRelation relation_tail = 23;
+}
+
+message ContributionInfo {
+    int64 grade = 1;
+}
+
+message ContributionInfoV2 {
+    uint64 grade = 1;
+    string rank_type = 2;
+    string text = 3;
+}
+
+message FansMedalInfo {
+    int64 target_id = 1;
+    int64 medal_level = 2;
+    string medal_name = 3;
+    int64 medal_color = 4;
+    int64 medal_color_start = 5;
+    int64 medal_color_end = 6;
+    int64 medal_color_border = 7;
+    int64 is_lighted = 8;
+    int64 guard_level = 9;
+    string special = 10;
+    int64 icon_id = 11;
+    int64 anchor_roomid = 12;
+    int64 score = 13;
+}
+
+message UserAnchorRelation {
+    string tail_icon = 1;
+    string tail_guide_text = 2;
+    uint64 tail_type = 3;
+}
+
+message GroupMedalBrief {
+    uint64 medal_id = 1;
+    string name = 2;
+    uint64 is_lighted = 3;
+}
+
+// 注：第22个字段 UserInfo 是一个复杂对象，结构同其他指令的 uinfo 字段
+实际数据示例如下
+
 {
   "cmd": "INTERACT_WORD_V2",
   "data": {
-    "dmscore": 32,
-    "pb": "CM+VgNflu6YGEhnku6XouqvkuLrngqwt5Lul5b+D5Li65piOIgEBKAEw8MXZDjiC1KTOBkC1t7DO0zNiAHjItLfupuXU0BiaASAIAxIKZGFpbHlfcmFuaxoQ5pel5qac5YmNM+eUqOaIt7IBeAjPlYDX5bumBhJnChnku6XouqvkuLrngqwt5Lul5b+D5Li65piOEkpodHRwczovL2kwLmhkc2xiLmNvbS9iZnMvZmFjZS83MjJjYTQwNjE5NjM1NDE4YzgwZWJkMWI1YTQ3YjEzNWNmYzhkYWUxLmpwZyICCBIyALoBAMIBAA=="
+    "dmscore": 176,
+    "pb": "CJ3N6wwSCW1pa3VmaWxjayICAwEoAzDwxdkOOLL/484GQKHWmMPXM0oxCOeVgKuwraYGEBUaCeWBmueMq+eahCDLqGkoy6hpMJK7ygI4y6hpQAFg8MXZDmjsE2IAeKbf5aPU38DSGJoBALIBrgIInc3rDBK9AQoJbWlrdWZpbGNrEkpodHRwczovL2kyLmhkc2xiLmNvbS9iZnMvZmFjZS82YTBkZDM2YmE3ZmExOGU4NGM2NTI3Yzg3YmViYTAyYTVkMmRlM2Y5LmpwZzJXCgltaWt1ZmlsY2sSSmh0dHBzOi8vaTIuaGRzbGIuY29tL2Jmcy9mYWNlLzZhMGRkMzZiYTdmYTE4ZTg0YzY1MjdjODdiZWJhMDJhNWQyZGUzZjkuanBnOgsg////////////ARplCgnlgZrnjKvnmoQQFRjLqGkgkrvKAijLqGkwy6hpSAFQ55WAq7CtpgZg7BN6CSMzRkI0RjY5OYIBCSMzRkI0RjY5OYoBCSMzRkI0RjY5OZIBByNGRkZGRkaaAQkjM0ZCNEY2RTYyALoBAA=="
   }
 }
-
 ```
 
 </details>
