@@ -3196,260 +3196,495 @@ data字段
 
 #### 直播间发红包弹幕
 
+当有老板发送红包，直播间公屏弹出“老板大气！点点红包抽礼物”等参与弹幕，并出现红包抽奖UI时触发。
+
 json格式
 
-| 字段 | 类型 |   内容  |    备注   |
+| 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd  | str | "POPULARITY_RED_POCKET_START" | |
-| data | obj | 送红包的老板的信息、里面的礼物信息 | |
+| cmd  | str  | "POPULARITY_RED_POCKET_START"或"POPULARITY_RED_POCKET_V2_START" | 触发红包抽奖开始的弹幕和UI的数据包，V2与V1结构基本一致，通常同时发送以兼容新旧系统 |
+| data | obj  | 送红包的老板的信息、红包内的礼物信息及红包倒计时状态 | 见下方展开 |
 
 data字段
 
-|    字段    | 类型 |  内容  |    备注   |
-| ---------- | --- | ------ | --------- |
-| lot_id | num | 发送的红包的ID | |
-| sender_uid | num | 发送者的UID | |
-| sender_name | str | 发送者的名称 | |
-| sender_face | str | 发送者的头像的URL | |
-| join_requirement | num | 待调查 | |
-| danmu | str | 用户参与红包时自动发送的弹幕内容 | |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| anchor_h5_url | str | 主播端H5页面链接 | **【注意】这是 V2 版本与 V1 版本唯一不同的地方。**在V1中此字段通常为空字符串，在V2中包含了用于控制主播端或新版移动端UI参数（如半屏Webview）的具体URL。 |
+| animation_icon_url | str | 动画图标URL | 若无则为空字符串 |
+| awards | array | 红包内包含的奖品（礼物）信息列表 | 见下方展开 |
 | current_time | num | 服务器发送数据包的Unix时间戳 | |
-| start_time | num | 可以开始抢红包的Unix时间戳 | |
-| end_time | num | 抢红包的结束时间Unix时间戳 | |
-| last_time | num | 红包的持续时间（秒） | start_time - end_time |
-| remove_time | num | 待调查 | |
-| replace_time | num | 待调查 | |
-| lot_status | num | 待调查 | |
-| h5_url | str | 红包页面的URL | |
-| user_status | num | 用户参与状态，但是不知道是哪个用户 | 1已参与<br />2未参与 |
-| awards | array | 红包内包含的礼物的信息 | |
-| lot_config_id | num | 待调查 | |
+| danmu | str | 参与弹幕内容 | 用户参与红包抽奖时自动发送的弹幕内容 |
+| end_time | num | 抢红包结束的Unix时间戳 | |
+| h5_url | str | 红包活动的H5页面链接 | |
+| icon_url | str | 图标URL | 若无则为空字符串 |
+| is_mystery | bool | 是否神秘人 | |
+| join_requirement | num | 参与条件 | 待调查 |
+| last_time | num | 红包持续时间 | 单位：秒 (通常为 start_time - end_time) |
+| lot_config_id | num | 抽奖配置ID | 待调查 |
+| lot_id | num | 发送的红包抽奖唯一ID | |
+| lot_status | num | 红包状态 | 待调查 |
+| remove_time | num | 移除倒计时UI的时间戳 | |
+| replace_time | num | 替换时间戳 | 待调查 |
+| rp_guard_info | obj | 舰队红包信息 | 若无则为null |
+| rp_type | num | 红包类型 | |
+| sender_face | str | 发送者的头像URL | |
+| sender_name | str | 发送者的名称 | |
+| sender_uid | num | 发送者的UID | |
+| sender_uinfo | obj | 发送者详细资料 | 包含头像、认证等全套数据，见下方展开 |
+| start_time | num | 开始抢红包的Unix时间戳 | |
 | total_price | num | 红包总价格 | |
+| user_status | num | 用户参与状态 | 1已参与，2未参与 |
 | wait_num | num | 待调查 | |
+| wait_num_v2 | num | 待调查 | |
 
-awards数组中的对象
-  
-|    字段    | 类型 |  内容  |    备注   |
-| ---------- | --- | ------ | --------- |
+data的awards数组中的对象
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
 | gift_id | num | 礼物ID | |
 | gift_name | str | 礼物名称 | |
 | gift_pic | str | 礼物图标URL | |
-| num | num | 该礼物的数量 | |
+| num | num | 该奖品的数量 | |
+
+data的sender_uinfo字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| uid | num | 发送者UID | |
+| base | obj | 基础资料 | 见下方展开 |
+| medal | obj | 勋章详情 | 若无则为null |
+| wealth | obj | 财富信息 | 若无则为null |
+| title | obj | 称号信息 | 若无则为null |
+| guard | obj | 舰队信息 | 若无则为null |
+| uhead_frame | obj | 头像框信息 | 若无则为null |
+| guard_leader | obj | 舰队队长状态 | 若无则为null |
+
+data的sender_uinfo的base字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| name | str | 用户昵称 | |
+| face | str | 头像链接 | |
+| name_color | num | 昵称颜色 | |
+| is_mystery | bool | 是否神秘人 | |
+| risk_ctrl_info | obj | 风控信息 | 若无则为null |
+| origin_info | obj | 原始信息 | 见下方展开 |
+| official_info | obj | 认证信息 | 见下方展开 |
+| name_color_str | str | 昵称颜色字符串 | |
+
+data的sender_uinfo的base的origin_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| name | str | 原始昵称 | |
+| face | str | 原始头像链接 | |
+
+data的sender_uinfo的base的official_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| role | num | 角色类型 | |
+| title | str | 认证头衔 | |
+| desc | str | 认证描述 | |
+| type | num | 认证类型 | |
 
 
 <details>
-<summary>查看消息示例：</summary>
-  
+<summary>查看消息示例 (V2版)：</summary>
+
 ```json
 {
-    "cmd": "POPULARITY_RED_POCKET_START",
-    "data": {
-        "lot_id": 8445764,
-        "sender_uid": 38554435,
-        "sender_name": "我的0019",
-        "sender_face": "https://i1.hdslb.com/bfs/face/282c3055de94c74d69094fad91a56f9ed73a270a.jpg",
-        "join_requirement": 1,
-        "danmu": "点点红包，关注主播抽礼物～",
-        "current_time": 1673684632,
-        "start_time": 1673684631,
-        "end_time": 1673684811,
-        "last_time": 180,
-        "remove_time": 1673684826,
-        "replace_time": 1673684821,
-        "lot_status": 1,
-        "h5_url": "https://live.bilibili.com/p/html/live-app-red-envelope/popularity.html?is_live_half_webview=1&hybrid_half_ui=1,5,100p,100p,000000,0,50,0,0,1;2,5,100p,100p,000000,0,50,0,0,1;3,5,100p,100p,000000,0,50,0,0,1;4,5,100p,100p,000000,0,50,0,0,1;5,5,100p,100p,000000,0,50,0,0,1;6,5,100p,100p,000000,0,50,0,0,1;7,5,100p,100p,000000,0,50,0,0,1;8,5,100p,100p,000000,0,50,0,0,1\&hybrid_rotate_d=1&hybrid_biz=popularityRedPacket&lotteryId=8445764",
-        "user_status": 2,
-        "awards": [
-            {
-                "gift_id": 31212,
-                "gift_name": "打call",
-                "gift_pic": "https://s1.hdslb.com/bfs/live/461be640f60788c1d159ec8d6c5d5cf1ef3d1830.png",
-                "num": 2
-            },
-            {
-                "gift_id": 31214,
-                "gift_name": "牛哇",
-                "gift_pic": "https://s1.hdslb.com/bfs/live/91ac8e35dd93a7196325f1e2052356e71d135afb.png",
-                "num": 3
-            },
-            {
-                "gift_id": 31216,
-                "gift_name": "i了i了",
-                "gift_pic": "https://s1.hdslb.com/bfs/live/1157a445487b39c0b7368d91b22290c60fa665b2.png",
-                "num": 3
-            }
-        ],
-        "lot_config_id": 3,
-        "total_price": 1600,
-        "wait_num": 0
-    }
+  "cmd": "POPULARITY_RED_POCKET_V2_START",
+  "data": {
+    "lot_id": 27867696,
+    "sender_uid": 26928797,
+    "sender_name": "mikufilck",
+    "sender_face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)",
+    "join_requirement": 1,
+    "danmu": "老板大气！点点红包抽礼物",
+    "current_time": 1775820034,
+    "start_time": 1775820033,
+    "end_time": 1775820333,
+    "last_time": 300,
+    "remove_time": 1775820348,
+    "replace_time": 1775820343,
+    "lot_status": 1,
+    "h5_url": "[https://live.bilibili.com/p/html/live-app-red-envelope/popularity.html?is_live_half_webview=1&hybrid_half_ui=1,5,100p,100p,000000,0,50,0,0,1;2,5,100p,100p,000000,0,50,0,0,1;3,5,100p,100p,000000,0,50,0,0,1;4,5,100p,100p,000000,0,50,0,0,1;5,5,100p,100p,000000,0,50,0,0,1;6,5,100p,100p,000000,0,50,0,0,1;7,5,100p,100p,000000,0,50,0,0,1;8,5,100p,100p,000000,0,50,0,0,1&hybrid_rotate_d=1&hybrid_biz=popularityRedPacket&lotteryId=27867696](https://live.bilibili.com/p/html/live-app-red-envelope/popularity.html?is_live_half_webview=1&hybrid_half_ui=1,5,100p,100p,000000,0,50,0,0,1;2,5,100p,100p,000000,0,50,0,0,1;3,5,100p,100p,000000,0,50,0,0,1;4,5,100p,100p,000000,0,50,0,0,1;5,5,100p,100p,000000,0,50,0,0,1;6,5,100p,100p,000000,0,50,0,0,1;7,5,100p,100p,000000,0,50,0,0,1;8,5,100p,100p,000000,0,50,0,0,1&hybrid_rotate_d=1&hybrid_biz=popularityRedPacket&lotteryId=27867696)",
+    "anchor_h5_url": "[https://live.bilibili.com/p/html/live-app-red-envelope/popularitygiftlist.html?is_live_half_webview=1&hybrid_rotate_d=1&hybrid_biz=popularityRedPacket&is_cling_player=1&hybrid_half_ui=1,3,100p,70p,0,0,30,100,12;2,2,375,100p,0,0,30,100;3,3,100p,70p,0,0,30,100,12;4,2,375,100p,0,0,30,100;5,3,100p,70p,0,0,30,100;6,3,100p,70p,0,0,30,100;7,3,100p,70p,0,0,30,100;8,3,100p,70p,0,1,30,100](https://live.bilibili.com/p/html/live-app-red-envelope/popularitygiftlist.html?is_live_half_webview=1&hybrid_rotate_d=1&hybrid_biz=popularityRedPacket&is_cling_player=1&hybrid_half_ui=1,3,100p,70p,0,0,30,100,12;2,2,375,100p,0,0,30,100;3,3,100p,70p,0,0,30,100,12;4,2,375,100p,0,0,30,100;5,3,100p,70p,0,0,30,100;6,3,100p,70p,0,0,30,100;7,3,100p,70p,0,0,30,100;8,3,100p,70p,0,1,30,100)",
+    "user_status": 2,
+    "awards": [
+      {
+        "gift_id": 34758,
+        "gift_name": "棒棒糖",
+        "gift_pic": "[https://s1.hdslb.com/bfs/live/15313516b3ec0875d67130f18c0a53c582e76531.png](https://s1.hdslb.com/bfs/live/15313516b3ec0875d67130f18c0a53c582e76531.png)",
+        "num": 5
+      },
+      {
+        "gift_id": 34003,
+        "gift_name": "人气票",
+        "gift_pic": "[https://s1.hdslb.com/bfs/live/7164c955ec0ed7537491d189b821cc68f1bea20d.png](https://s1.hdslb.com/bfs/live/7164c955ec0ed7537491d189b821cc68f1bea20d.png)",
+        "num": 5
+      },
+      {
+        "gift_id": 31216,
+        "gift_name": "小花花",
+        "gift_pic": "[https://s1.hdslb.com/bfs/live/5126973892625f3a43a8290be6b625b5e54261a5.png](https://s1.hdslb.com/bfs/live/5126973892625f3a43a8290be6b625b5e54261a5.png)",
+        "num": 5
+      }
+    ],
+    "lot_config_id": 188,
+    "total_price": 2000,
+    "wait_num": 0,
+    "wait_num_v2": 0,
+    "is_mystery": false,
+    "rp_type": 0,
+    "sender_uinfo": {
+      "uid": 26928797,
+      "base": {
+        "name": "mikufilck",
+        "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)",
+        "name_color": 0,
+        "is_mystery": false,
+        "risk_ctrl_info": null,
+        "origin_info": {
+          "name": "mikufilck",
+          "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)"
+        },
+        "official_info": {
+          "role": 0,
+          "title": "",
+          "desc": "",
+          "type": -1
+        },
+        "name_color_str": ""
+      },
+      "medal": null,
+      "wealth": null,
+      "title": null,
+      "guard": null,
+      "uhead_frame": null,
+      "guard_leader": null
+    },
+    "icon_url": "",
+    "animation_icon_url": "",
+    "rp_guard_info": null
+  }
 }
 ```
-
 </details>
   
 
 #### 直播间红包
 
+当有人在直播间送出红包时触发，用于在公播界面展示“XXX送出红包”的消息。
+
 json格式
 
-| 字段 | 类型 |   内容  |    备注   |
+| 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd  | str | "POPULARITY_RED_POCKET_NEW" | 与“直播间发红包弹幕”不同<br />那个是发红包的弹幕信息<br />这个则和“送礼”的信息相似，但也有前者的一些字段 |
-| data | obj | 发送者信息和红包（礼物）信息 | |
+| cmd  | str  | "POPULARITY_RED_POCKET_NEW"或"POPULARITY_RED_POCKET_V2_NEW" | 触发公屏展示送出红包提示语的消息,V2的内容和V1的内容完全一致，但是两个会被同时发送，可能是兼容新旧系统 |
+| data | obj  | 发送者信息和红包（礼物）信息 | 见下方展开 |
 
 data字段
 
-|    字段    | 类型 |  内容  |    备注   |
-| ---------- | --- | ------ | --------- |
-| lot_id | num | 发送的红包的ID | |
-| start_time | num | 开始抢红包的Unix时间戳 | |
-| current_time | num | 服务器发送数据包的Unix时间戳 | |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| lot_id | num | 红包唯一ID | |
+| start_time | num | 开始抢红包的时间戳 | Unix时间戳，精确到秒 |
+| current_time | num | 服务器当前时间戳 | Unix时间戳，精确到秒 |
 | wait_num | num | 待调查 | |
-| uname | str | 发送者的名称 | |
-| uid | num | 发送者的UID | |
-| action | str | 礼物操作 | |
+| wait_num_v2 | num | 待调查 | |
+| uname | str | 发送者名称 | |
+| uid | num | 发送者UID | |
+| action | str | 礼物操作 | 通常为"送出" |
 | num | num | 礼物数量 | |
-| gift_name | str | "红包" | |
-| gift_id | num | 礼物ID | |
-| price | num | 待调查 | |
-| name_color | str | 发送者的名称的颜色 | |
-| medal_info | obj | 发送者的粉丝勋章信息 | |
-  
-  
+| gift_name | str | 礼物名称 | 通常为"红包" |
+| gift_id | num | 礼物ID | 通常为13000 |
+| price | num | 待调查 | 通常为红包对应的人民币/电池价值 |
+| name_color | str | 发送者名称颜色 | |
+| medal_info | obj | 发送者勋章信息 | 见下方展开 |
+| wealth_level | num | 财富等级 | |
+| group_medal | obj | 粉丝团信息 | 若无则为null |
+| is_mystery | bool | 是否神秘人 | |
+| sender_info | obj | 发送者详细资料 | 包含头像、认证等全套数据，见下方展开 |
+| gift_icon | str | 红包图标 | 若无则为空字符串 |
+| rp_type | num | 红包类型 | |
+
+data的medal_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| target_id | num | 勋章归属者UID | |
+| special | str | 特殊标识 | |
+| icon_id | num | 图标ID | |
+| anchor_uname | str | 主播昵称 | |
+| anchor_roomid | num | 主播房间ID | |
+| medal_level | num | 勋章等级 | |
+| medal_name | str | 勋章名称 | |
+| medal_color | num | 勋章颜色 | 十进制数值 |
+| medal_color_start | num | 勋章渐变起始色 | 十进制数值 |
+| medal_color_end | num | 勋章渐变结束色 | 十进制数值 |
+| medal_color_border | num | 勋章边框颜色 | 十进制数值 |
+| is_lighted | num | 是否点亮 | |
+| guard_level | num | 舰队等级 | |
+
+data的sender_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| uid | num | 发送者UID | |
+| base | obj | 基础资料 | 见下方展开 |
+| medal | obj | 勋章详情 | 若无则为null |
+| wealth | obj | 财富信息 | 见下方展开 |
+| title | obj | 称号信息 | 若无则为null |
+| guard | obj | 舰队信息 | 见下方展开 |
+| uhead_frame | obj | 头像框信息 | 若无则为null |
+| guard_leader | obj | 舰队队长状态 | 若无则为null |
+
+data的sender_info的base字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| name | str | 用户昵称 | |
+| face | str | 头像链接 | |
+| name_color | num | 昵称颜色 | |
+| is_mystery | bool | 是否神秘人 | |
+| risk_ctrl_info | obj | 风控信息 | 若无则为null |
+| origin_info | obj | 原始信息 | 见下方展开 |
+| official_info | obj | 认证信息 | 见下方展开 |
+| name_color_str | str | 昵称颜色字符串 | |
+
+data的sender_info的base的origin_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| name | str | 原始昵称 | |
+| face | str | 原始头像链接 | |
+
+data的sender_info的base的official_info字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| role | num | 角色类型 | |
+| title | str | 认证头衔 | |
+| desc | str | 认证描述 | |
+| type | num | 认证类型 | |
+
+data的sender_info的wealth字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| level | num | 财富等级 | |
+| dm_icon_key | str | 弹幕图标标识 | |
+
+data的sender_info的guard字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| level | num | 舰队等级 | |
+| expired_str | str | 过期时间字符串 | |
+
 <details>
 <summary>查看消息示例：</summary>
-  
+
 ```json
 {
-    "cmd": "POPULARITY_RED_POCKET_NEW",
-    "data": {
-        "lot_id": 8445764,
-        "start_time": 1673684631,
-        "current_time": 1673684631,
-        "wait_num": 0,
-        "uname": "我的0019",
-        "uid": 38554435,
-        "action": "送出",
-        "num": 1,
-        "gift_name": "红包",
-        "gift_id": 13000,
-        "price": 20,
-        "name_color": "",
-        "medal_info": {
-            "target_id": 400963649,
-            "special": "",
-            "icon_id": 0,
-            "anchor_uname": "",
-            "anchor_roomid": 0,
-            "medal_level": 21,
-            "medal_name": "憨憨酥",
-            "medal_color": 1725515,
-            "medal_color_start": 12632256,
-            "medal_color_end": 12632256,
-            "medal_color_border": 12632256,
-            "is_lighted": 0,
-            "guard_level": 0
-        }
-    }
+  "cmd": "POPULARITY_RED_POCKET_NEW",
+  "data": {
+    "lot_id": 27867696,
+    "start_time": 1775820033,
+    "current_time": 1775820033,
+    "wait_num": 0,
+    "wait_num_v2": 0,
+    "uname": "mikufilck",
+    "uid": 26928797,
+    "action": "送出",
+    "num": 1,
+    "gift_name": "红包",
+    "gift_id": 13000,
+    "price": 20,
+    "name_color": "",
+    "medal_info": {
+      "target_id": 0,
+      "special": "",
+      "icon_id": 0,
+      "anchor_uname": "",
+      "anchor_roomid": 0,
+      "medal_level": 0,
+      "medal_name": "",
+      "medal_color": 0,
+      "medal_color_start": 0,
+      "medal_color_end": 0,
+      "medal_color_border": 0,
+      "is_lighted": 0,
+      "guard_level": 0
+    },
+    "wealth_level": 33,
+    "group_medal": null,
+    "is_mystery": false,
+    "sender_info": {
+      "uid": 26928797,
+      "base": {
+        "name": "mikufilck",
+        "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)",
+        "name_color": 0,
+        "is_mystery": false,
+        "risk_ctrl_info": null,
+        "origin_info": {
+          "name": "mikufilck",
+          "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)"
+        },
+        "official_info": {
+          "role": 0,
+          "title": "",
+          "desc": "",
+          "type": -1
+        },
+        "name_color_str": ""
+      },
+      "medal": null,
+      "wealth": {
+        "level": 33,
+        "dm_icon_key": ""
+      },
+      "title": null,
+      "guard": {
+        "level": 0,
+        "expired_str": ""
+      },
+      "uhead_frame": null,
+      "guard_leader": null
+    },
+    "gift_icon": "",
+    "rp_type": 0
+  }
 }
 ```
 </details>
 
-
 #### 直播间抢到红包的用户
+
+当红包抽奖时间结束，开奖时接收到此消息，包含所有中奖用户及其获得的礼物信息。
 
 json格式
 
-| 字段 | 类型 |   内容  |    备注   |
+| 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd  | str | "POPULARITY_RED_POCKET_WINNER_LIST" | |
-| data | obj | 抢到红包的用户信息、红包内的礼物信息 | |
+| cmd  | str  | "POPULARITY_RED_POCKET_WINNER_LIST"或"POPULARITY_RED_POCKET_V2_WINNER_LIST" | 触发公屏展示红包开奖结果的消息。V2与V1结构基本一致，通常同时发送以兼容新旧系统。 |
+| data | obj  | 抢到红包的用户信息、红包内的礼物信息 | 见下方展开 |
 
 data字段
 
-|    字段    | 类型 |  内容  |    备注   |
-| ---------- | --- | ------ | --------- |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
 | lot_id | num | 该红包的ID | |
 | total_num | num | 该红包内所有礼物的总数 | |
-| winner_info | array | 抢到红包的用户的信息<br />抢到的礼物ID等 | |
-| awards | obj | 该红包内的礼物信息 | |
-| version | num | 待调查 | |
+| award_num | num | 发放的奖品数量 | **【注意】这是V1与V2的差异字段。** V1中包含实际数值，V2中通常归零为0。 |
+| winner_info | array | 抢到红包的用户的信息数组 | 内部为数组形式，见下方展开 |
+| awards | obj | 该红包内的礼物信息字典 | 见下方展开 |
+| version | num | 版本号 | 通常为1 |
+| rp_type | num | 红包类型 | |
+| timestamp | num | 数据包发送的时间戳 | **【注意】这是V1与V2的差异字段。** V1中为精确到秒的Unix时间戳，V2中通常归零为0。 |
 
 winner_info数组中的数组
 
 | 索引 | 类型 | 内容 | 备注 |
 | ---- | ---- | ---- | ---- |
-| 0 | num | 该抢到红包的用户的UID | |
-| 1 | str | 该抢到红包的用户的名称 | |
+| 0 | num | 用户的UID | 抢到该礼物的用户UID |
+| 1 | str | 用户的名称 | 抢到该礼物的用户昵称 |
 | 2 | num | 待调查 | |
-| 3 | num | 该用户抢到的礼物的ID | |
+| 3 | num | 抢到的礼物ID | 对应下文awards字段里的键名 |
+| 4 | bool | 待调查 | 如false |
+| 5 | null/obj | 待调查 | 目前观察到为null |
+| 6 | num | 抢到礼物的时间戳 | Unix时间戳，精确到秒 |
+| 7 | num | 主播UID | 当前红包所在直播间的主播UID |
 
 awards字段
 
-|    字段    | 类型 |  内容  |    备注   |
-| ---------- | --- | ------ | --------- |
-| 礼物ID | obj | 礼物信息 | |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| 礼物ID | obj | 礼物信息 | 键名为对应的礼物ID（如"34758"），值为该礼物的具体信息，见下方展开 |
 | ... | obj | | |
 
 礼物ID 对象
 
-|    字段    | 类型 |  内容  |    备注   |
-| ---------- | --- | ------ | --------- |
-| award_type | num | 待调查 | |
-| award_name | str | 该礼物的名称 | |
-| award_pic | str | 该礼物的图标URL | |
-| award_big_pic | str | 该礼物的高分辨率图标URL | |
-| award_price | num | 待调查 | |
-  
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| award_type | num | 待调查 | 通常为1 |
+| award_name | str | 礼物的名称 | |
+| award_pic | str | 礼物的图标URL | |
+| award_big_pic | str | 礼物的高分辨率图标URL | |
+| award_price | num | 礼物价值 | |
+
 <details>
-<summary>查看消息示例：</summary>
-  
+<summary>查看消息示例 (V1版)：</summary>
+
 ```json
 {
-    "cmd": "POPULARITY_RED_POCKET_WINNER_LIST",
-    "data": {
-        "lot_id": 8445764,
-        "total_num": 8,
-        "winner_info": [
-            [
-                38554435,
-                "我的0019",
-                4581509,
-                31212
-            ],
-            [
-                516174930,
-                "云来海遛鸟大爷",
-                4606389,
-                31212
-            ]
-        ],
-        "awards": {
-            "31212": {
-                "award_type": 1,
-                "award_name": "打call",
-                "award_pic": "https://s1.hdslb.com/bfs/live/461be640f60788c1d159ec8d6c5d5cf1ef3d1830.png",
-                "award_big_pic": "https://i0.hdslb.com/bfs/live/9e6521c57f24c7149c054d265818d4b82059f2ef.png",
-                "award_price": 500
-            },
-            "31214": {
-                "award_type": 1,
-                "award_name": "牛哇",
-                "award_pic": "https://s1.hdslb.com/bfs/live/91ac8e35dd93a7196325f1e2052356e71d135afb.png",
-                "award_big_pic": "https://i0.hdslb.com/bfs/live/3b74c117b4f265edcea261bc5608a58d3a7c300a.png",
-                "award_price": 100
-            },
-            "31216": {
-                "award_type": 1,
-                "award_name": "i了i了",
-                "award_pic": "https://s1.hdslb.com/bfs/live/1157a445487b39c0b7368d91b22290c60fa665b2.png",
-                "award_big_pic": "https://i0.hdslb.com/bfs/live/cfb9c3d9bdd2c25c95b7d859ebaa590ca9362adb.png",
-                "award_price": 100
-            }
-        },
-        "version": 1
-    }
+  "cmd": "POPULARITY_RED_POCKET_WINNER_LIST",
+  "data": {
+    "lot_id": 27867696,
+    "total_num": 15,
+    "award_num": 13,
+    "winner_info": [
+      [
+        353034971,
+        "欧皇丹尼斯",
+        14357970,
+        34758,
+        false,
+        null,
+        1775820335,
+        1396521412
+      ],
+      [
+        499498985,
+        "桜を泣く",
+        14610052,
+        34003,
+        false,
+        null,
+        1775820335,
+        1396521412
+      ],
+      [
+        12870323,
+        "yuk608",
+        14525734,
+        31216,
+        false,
+        null,
+        1775820335,
+        1396521412
+      ]
+    ],
+    "awards": {
+      "34758": {
+        "award_type": 1,
+        "award_name": "棒棒糖",
+        "award_pic": "[https://s1.hdslb.com/bfs/live/15313516b3ec0875d67130f18c0a53c582e76531.png](https://s1.hdslb.com/bfs/live/15313516b3ec0875d67130f18c0a53c582e76531.png)",
+        "award_big_pic": "[https://i0.hdslb.com/bfs/live/a015e813040fb04f23ed5185baaaae124e410da5.png](https://i0.hdslb.com/bfs/live/a015e813040fb04f23ed5185baaaae124e410da5.png)",
+        "award_price": 200
+      },
+      "34003": {
+        "award_type": 1,
+        "award_name": "人气票",
+        "award_pic": "[https://s1.hdslb.com/bfs/live/7164c955ec0ed7537491d189b821cc68f1bea20d.png](https://s1.hdslb.com/bfs/live/7164c955ec0ed7537491d189b821cc68f1bea20d.png)",
+        "award_big_pic": "[https://i0.hdslb.com/bfs/live/5bfaddf9a78e677501bb6d440f4d690668136496.png](https://i0.hdslb.com/bfs/live/5bfaddf9a78e677501bb6d440f4d690668136496.png)",
+        "award_price": 100
+      },
+      "31216": {
+        "award_type": 1,
+        "award_name": "小花花",
+        "award_pic": "[https://s1.hdslb.com/bfs/live/5126973892625f3a43a8290be6b625b5e54261a5.png](https://s1.hdslb.com/bfs/live/5126973892625f3a43a8290be6b625b5e54261a5.png)",
+        "award_big_pic": "[https://i0.hdslb.com/bfs/live/cf90eac49ac0df5c26312f457e92edfff266f3f1.png](https://i0.hdslb.com/bfs/live/cf90eac49ac0df5c26312f457e92edfff266f3f1.png)",
+        "award_price": 100
+      }
+    },
+    "version": 1,
+    "rp_type": 0,
+    "timestamp": 1775820335
+  }
 }
 ```
 </details>
