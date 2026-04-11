@@ -2303,22 +2303,31 @@ json格式
 
 #### 主播准备中
 
+当主播结束直播（下播）或直播间进入“准备中”状态时接收到此消息。
+
 json格式
 
 | 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd | str | "PREPARING" | |
-| round | num | 轮播状态：<br/>1正在轮播<br/>0未轮播 | |
-| roomid | num | 直播间ID | 未知是真实ID还是短号 | |
+| cmd  | str  | "PREPARING" | 指示直播间进入准备中/下播状态 |
+| roomid | str | 直播间ID | 注意：实际数据中为字符串格式。未知是真实ID还是短号，但通常为真实ID |
+| round | num | 轮播状态 | **[旧版/可选字段]** 1正在轮播，0未轮播。新版数据中观察到该字段可能被省略 |
+| msg_id | str | 消息唯一ID | **[新版新增]** 格式通常为时间戳与随机数的组合 |
+| p_is_ack | bool | 待调查 | **[新版新增]** |
+| p_msg_type | num | 待调查 | **[新版新增]** |
+| send_time | num | 发送时间戳 | **[新版新增]** 精确到毫秒 |
 
 <details>
-<summary>查看消息示例：</summary>
-  
+<summary>查看消息示例 (新版)：</summary>
+
 ```json
 {
-    "cmd": "PREPARING",
-    "round": 1,
-    "roomid": "8618057"
+  "cmd": "PREPARING",
+  "msg_id": "91518955142857216:1000:1000",
+  "p_is_ack": true,
+  "p_msg_type": 1,
+  "roomid": "30827248",
+  "send_time": 1775833156984
 }
 ```
 
@@ -2498,6 +2507,57 @@ list数组中的对象
             }
         ]
     }
+}
+```
+
+</details>
+
+#### 主播排行榜变动
+
+当主播在直播间的各大排行榜（如热门榜、小时榜、高能榜等）上的名次发生变动、或者上榜/下榜时接收到此消息。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "RANK_CHANGED" | 指示主播的打榜排名发生变动 |
+| data | obj  | 排行榜详细变动信息 | 见下方展开 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| uid | num | 主播UID | 当前直播间主播的UID |
+| rank | num | 综合排名 | 当前的综合排名（0通常表示未上榜或名次靠后未显示具体的数字） |
+| countdown | num | 倒计时 | 排行榜结算的倒计时（秒） |
+| timestamp | num | 时间戳 | 数据包发送的Unix时间戳，精确到秒 |
+| url | str | 通用榜单链接 | 若无则为空字符串 |
+| on_rank_name_by_type | str | 上榜名称 | 例如"热门榜" |
+| rank_name_by_type | str | 分类榜单名称 | 例如"热门榜" |
+| url_by_type | str | 分类榜单H5链接 | 包含榜单具体UI参数和主播ID参数的网页链接 |
+| rank_by_type | num | 分类排名 | 主播在该具体分类榜单中的名次（0通常表示未进入显示范围） |
+| rank_type | num | 排行榜类型 | 排行榜的内部类型枚举值（例如3代表某种特定的热门榜） |
+| sub_rank_type | num | 子排行榜类型 | 该榜单下的子分类枚举值 |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "RANK_CHANGED",
+  "data": {
+    "uid": 3546384651258599,
+    "rank": 0,
+    "countdown": 0,
+    "timestamp": 1775833156,
+    "url": "",
+    "on_rank_name_by_type": "热门榜",
+    "rank_name_by_type": "热门榜",
+    "url_by_type": "[https://live.bilibili.com/p/html/live-app-hotrank/index.html?is_live_half_webview=1&hybrid_rotate_d=1&hybrid_half_ui=1,3,100p,70p,0,0,30,100,12;2,2,375,100p,0,0,30,100,0;3,3,100p,70p,0,0,30,100,12;4,2,375,100p,0,0,30,100,0;5,3,100p,70p,0,0,30,100,0;6,3,100p,70p,0,0,30,100,0;7,3,100p,70p,0,0,30,100,0;8,3,100p,70p,0,0,30,100,0&pc_ui=338,465,f4eefa,0&redirect=v2&rank=hot&anchorId=3546384651258599&rank_type=1](https://live.bilibili.com/p/html/live-app-hotrank/index.html?is_live_half_webview=1&hybrid_rotate_d=1&hybrid_half_ui=1,3,100p,70p,0,0,30,100,12;2,2,375,100p,0,0,30,100,0;3,3,100p,70p,0,0,30,100,12;4,2,375,100p,0,0,30,100,0;5,3,100p,70p,0,0,30,100,0;6,3,100p,70p,0,0,30,100,0;7,3,100p,70p,0,0,30,100,0;8,3,100p,70p,0,0,30,100,0&pc_ui=338,465,f4eefa,0&redirect=v2&rank=hot&anchorId=3546384651258599&rank_type=1)",
+    "rank_by_type": 0,
+    "rank_type": 3,
+    "sub_rank_type": 0
+  }
 }
 ```
 
