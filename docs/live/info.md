@@ -51,8 +51,8 @@
 | room_silent_level       | num       | 禁言等级   |                             |
 | room_silent_second      | num       | 禁言时间   | 单位是秒                        |
 | area_name               | str       | 分区名称   |                             |
-| pardants                | str       | 未知     | 未知                          |
-| area_pardants           | str       | 未知     | 未知                          |
+| pendants                | str       | 未知     | 未知                          |
+| area_pendants           | str       | 未知     | 未知                          |
 | hot_words               | list(str) | 热词     |                             |
 | hot_words_status        | num       | 热词状态   |                             |
 | verify                  | str       | 未知     | 未知                          |
@@ -403,7 +403,7 @@ curl -G 'https://api.live.bilibili.com/room/v1/Room/room_init' \
 | info           | obj | 主播信息      |            |
 | exp            | obj | 经验等级      |            |
 | follower_num   | num | 主播粉丝数     |            |
-| room_id        | num | 直播间id（短号） |            |
+| room_id        | num | 直播间真实ID（长号） |            |
 | medal_name     | str | 粉丝勋章名     |            |
 | glory_count    | num | 主播荣誉数     |            |
 | pendant        | str | 直播间头像框url |            |
