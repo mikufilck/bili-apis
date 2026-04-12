@@ -289,10 +289,12 @@ json格式
 - [直播间看过人数](#直播间看过人数)
 - [用户进场特效](#用户进场特效)
 - [主播排行榜变动](#主播排行榜变动)
+- [榜单排名刷新](#榜单排名刷新)
+- [人气排行标签页变更](#人气排行标签页变更)
 - [直播间在所属分区的排名改变](#直播间在所属分区的排名改变)
 - [直播间在所属分区排名提升的祝福](#直播间在所属分区排名提升的祝福)
 - [直播间信息更改](#直播间信息更改)
-- [醒目留言按钮](#醒目留言按钮)
+- [醒目留言按钮状态](#醒目留言按钮状态)
 - [顶部横幅](#顶部横幅)
 - [下播的直播间](#下播的直播间)
 - [未知消息](#未知消息)
@@ -2336,6 +2338,40 @@ json格式
 
 #### 直播开始
 
+当主播开始直播（开播）时接收到此消息。与 `PREPARING`（准备中/下播）指令相对应。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "LIVE" | 指示直播间正式进入开播状态 |
+| live_key | str | 直播场次密钥 | 该场直播的全局唯一标识符 |
+| voice_background | str | 语音背景图 | 音频/电台直播时的背景图URL，视频直播通常为空字符串 |
+| sub_session_key | str | 子场次密钥 | 场次标识，通常由 `live_key` 和开播时间戳（sub_time）拼接而成 |
+| live_platform | str | 开播平台 | 主播使用的推流工具/平台标识（例如 `"pc_link"` 代表PC端推流） |
+| live_model | num | 直播模式 | 待调查（例如0可能代表常规视频直播） |
+| roomid | num | 直播间ID | **【注意】** 在此指令中为数字类型（而在 `PREPARING` 指令中常为字符串格式） |
+| live_time | num | 开播时间戳 | 服务器记录的正式开播 Unix 时间戳，精确到秒 |
+| special_types | array | 特殊类型列表 | 待调查（可能用于标记特定活动的特殊直播间，通常为空数组） |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "LIVE",
+  "live_key": "693870340542020839",
+  "voice_background": "",
+  "sub_session_key": "693870340542020839sub_time:1775986526",
+  "live_platform": "pc_link",
+  "live_model": 0,
+  "roomid": 3128551,
+  "live_time": 1775986526,
+  "special_types": []
+}
+```
+</details>
+
 
 #### 主播信息更新
 
@@ -2562,6 +2598,85 @@ data字段
 }
 ```
 
+</details>
+
+#### 榜单排名刷新
+
+当主播切换直播分区，或者涉及到特定排行榜模块发生重大变动时，系统会下发此指令，强制要求客户端重新拉取并刷新对应的排行榜数据。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "CHG_RANK_REFRESH" | 指示客户端刷新排行榜数据 |
+| data | obj  | 刷新榜单的具体参数 | 见下方展开 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| cmd | str | 内部命令 | 再次嵌套了 "CHG_RANK_REFRESH" |
+| rank_type | num | 排行榜类型 | 排行榜的内部类型枚举值（如 3 对应特定的榜单类型） |
+| rank_module | str | 排行榜所属模块 | 触发刷新的模块。例如 `"area"` 代表**分区榜单**（通常在主播切换分区后触发） |
+| room_id | num | 直播间ID | 当前直播间的数字 ID |
+| ruid | num | 主播UID | 当前直播间主播的 UID |
+| need_refresh | bool | 是否需要刷新 | `true` 代表要求前端立刻执行列表刷新动作 |
+| version | num | 版本号/时间戳 | 格式通常为毫秒级时间戳（如 1775987047867），用于前端对比数据的新旧版本以防止冲突 |
+
+<details>
+<summary>查看消息示例 (因切换分区触发的分区榜刷新)：</summary>
+
+```json
+{
+  "cmd": "CHG_RANK_REFRESH",
+  "data": {
+    "cmd": "CHG_RANK_REFRESH",
+    "rank_type": 3,
+    "rank_module": "area",
+    "room_id": 3128551,
+    "ruid": 17545306,
+    "need_refresh": true,
+    "version": 1775987047867
+  }
+}
+```
+</details>
+
+#### 人气排行标签页变更
+
+当主播切换直播分区时，由于所属分类发生变化，直播间前端 UI 上“人气排行榜”面板的分类标签（Tab）也需要随之重置。系统会下发此指令通知客户端刷新标签页。
+（注：通常与 `CHG_RANK_REFRESH` 伴随出现，一个负责刷新底层数据，一个负责刷新前端 UI 标签）
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "POPULARITY_RANK_TAB_CHG" | 指示客户端刷新人气排行面板的标签页 UI |
+| data | obj  | 标签页刷新参数 | 见下方展开 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| room_id | num | 直播间ID | 当前直播间的数字 ID |
+| ruid | num | 主播UID | 当前直播间主播的 UID |
+| type | str | 变更类型 | 触发标签页变更的排行类型。例如 `"area"` 代表**分区排行**的标签页需要刷新 |
+| need_refresh_tab | bool | 是否刷新标签 | `true` 代表要求前端立刻执行排行标签页（Tab）的重绘动作 |
+
+<details>
+<summary>查看消息示例 (因切换分区触发)：</summary>
+
+```json
+{
+  "cmd": "POPULARITY_RANK_TAB_CHG",
+  "data": {
+    "room_id": 3128551,
+    "ruid": 17545306,
+    "type": "area",
+    "need_refresh_tab": true
+  }
+}
+```
 </details>
 
 #### 直播间在人气榜的排名改变
@@ -4718,77 +4833,82 @@ danmaku_style字段
 
 #### 直播间信息更改
 
+当主播手动修改直播间标题，或者更改直播分区时触发。
+
 json格式
 
-| 字段 | 类型 |   内容  |    备注   |
+| 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd  | str | "ROOM_CHANGE" | 例如直播间标题更改、直播间分区更改 |
-| data | obj | | |
+| cmd  | str  | "ROOM_CHANGE" | 指示直播间标题或分区发生更改 |
+| data | obj  | 变更后的标题、分区及场次信息 | 见下方展开 |
 
 data字段
 
-|    字段    | 类型 |  内容  |    备注   |
-| ---------- | --- | ------ | --------- |
-| title | str | 直播间标题 | |
-| area_id | num | 当前直播间所属分区的ID | |
-| parent_area_id | num | 待调查 | |
-| area_name | str | 当前直播间所属分区的名称 | |
-| parent_area_name | str | 待调查 | |
-| live_key | str | 待调查 | |
-| sub_session_key | str | 待调查 | |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| title | str | 直播间标题 | 变更后的新标题 |
+| area_id | num | 子分区ID | 当前直播间所属二级分区的ID（如：371） |
+| parent_area_id | num | 父分区ID | 当前直播间所属一级分区的ID（如：9） |
+| area_name | str | 子分区名称 | 当前直播间所属二级分区的名称（如：虚拟主播） |
+| parent_area_name | str | 父分区名称 | 当前直播间所属一级分区的名称（如：虚拟主播） |
+| live_key | str | 直播场次密钥 | 当前直播的全局唯一标识符。如果主播在未开播时修改标题，此值通常为 `"0"` |
+| sub_session_key | str | 子场次密钥 | 格式为 `[live_key]sub_time:[时间戳]`。直播中途切换分区时，时间戳部分会刷新 |
 
 <details>
 <summary>查看消息示例：</summary>
 
 ```json
 {
-    "cmd": "ROOM_CHANGE",
-    "data": {
-        "title": "开始白给CS",
-        "area_id": 371,
-        "parent_area_id": 9,
-        "area_name": "虚拟主播",
-        "parent_area_name": "虚拟主播",
-        "live_key": "320830629635915849",
-        "sub_session_key": "320830629635915849sub_time:1673690546"
-    }
+  "cmd": "ROOM_CHANGE",
+  "data": {
+    "title": "开始白给CS",
+    "area_id": 371,
+    "parent_area_id": 9,
+    "area_name": "虚拟主播",
+    "parent_area_name": "虚拟主播",
+    "live_key": "320830629635915849",
+    "sub_session_key": "320830629635915849sub_time:1673690546"
+  }
 }
 ```
 </details>
 
 
-#### 醒目留言按钮
+#### 醒目留言按钮状态
+
+指示直播间“醒目留言（Super Chat）”功能的按钮是否开启及相关 UI 参数。
+**【触发机制】** 该功能与直播间所属的“分区”强绑定。当主播开播，或者在直播中途将分区切换到支持 SC 的分区（如“虚拟主播”）时，系统会下发此指令，通知客户端渲染 SC 发送按钮。
 
 json格式
 
-| 字段 | 类型 |   内容  |    备注   |
+| 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd  | str | "SUPER_CHAT_ENTRANCE" | 不知道有什么意义 |
-| data | obj | 醒目留言按钮的信息 | |
-| roomid | num | 直播间ID | 未知是短号还是真实ID |
+| cmd  | str  | "SUPER_CHAT_ENTRANCE" | 指示更新醒目留言按钮（入口）的状态 |
+| data | obj  | 醒目留言按钮的具体信息 | 见下方展开 |
+| roomid | str | 直播间ID | 注意：实际数据中为字符串格式。通常为真实房间ID |
 
 data字段
 
-|    字段    | 类型 |  内容  |    备注   |
-| ---------- | --- | ------ | --------- |
-| status | num | 待调查 | |
-| jump_url | str | 按下“醒目留言”按钮后弹出小窗的页面URL | |
-| icon | str | “醒目留言”按钮图标的URL | |
-| broadcast_type | num | 待调查 | |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| status | num | 开启状态 | 1 代表开启/显示醒目留言按钮，0 代表关闭/隐藏 |
+| jump_url | str | 弹窗H5链接 | 观众点击“醒目留言”按钮后，客户端弹出的用于输入 SC 字符和付款的半屏 Webview 页面链接 |
+| icon | str | 按钮图标URL | “醒目留言”按钮在 UI 上显示的图片链接 |
+| broadcast_type | num | 广播类型 | 待调查（通常为1，可能表示下发给当前房间的所有用户） |
 
 <details>
-<summary>查看消息示例：</summary>
+<summary>查看消息示例 (分区切换后开启 SC 入口)：</summary>
 
 ```json
 {
-    "cmd": "SUPER_CHAT_ENTRANCE",
-    "data": {
-        "status": 1,
-        "jump_url": "https://live.bilibili.com/p/html/live-app-superchat2/index.html?is_live_half_webview=1&hybrid_half_ui=1,3,100p,70p,ffffff,0,30,100;2,2,375,100p,ffffff,0,30,100;3,3,100p,70p,ffffff,0,30,100;4,2,375,100p,ffffff,0,30,100;5,3,100p,60p,ffffff,0,30,100;6,3,100p,60p,ffffff,0,30,100;7,3,100p,60p,ffffff,0,30,100",
-        "icon": "https://i0.hdslb.com/bfs/live/0a9ebd72c76e9cbede9547386dd453475d4af6fe.png",
-        "broadcast_type": 1
-    },
-    "roomid": "8618057"
+  "cmd": "SUPER_CHAT_ENTRANCE",
+  "data": {
+    "status": 1,
+    "jump_url": "[https://live.bilibili.com/p/html/live-app-superchat2/index.html?is_live_half_webview=1&hybrid_half_ui=1,3,100p,70p,ffffff,0,30,100;2,2,375,100p,ffffff,0,30,100;3,3,100p,70p,ffffff,0,30,100;4,2,375,100p,ffffff,0,30,100;5,3,100p,60p,ffffff,0,30,100;6,3,100p,60p,ffffff,0,30,100;7,3,100p,60p,ffffff,0,30,100](https://live.bilibili.com/p/html/live-app-superchat2/index.html?is_live_half_webview=1&hybrid_half_ui=1,3,100p,70p,ffffff,0,30,100;2,2,375,100p,ffffff,0,30,100;3,3,100p,70p,ffffff,0,30,100;4,2,375,100p,ffffff,0,30,100;5,3,100p,60p,ffffff,0,30,100;6,3,100p,60p,ffffff,0,30,100;7,3,100p,60p,ffffff,0,30,100)",
+    "icon": "[https://i0.hdslb.com/bfs/live/0a9ebd72c76e9cbede9547386dd453475d4af6fe.png](https://i0.hdslb.com/bfs/live/0a9ebd72c76e9cbede9547386dd453475d4af6fe.png)",
+    "broadcast_type": 1
+  },
+  "roomid": "3128551"
 }
 ```
 </details>
