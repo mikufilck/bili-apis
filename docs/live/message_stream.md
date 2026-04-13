@@ -679,7 +679,7 @@ data.data字段 (将字符串反序列化后的内部对象)
 
 </details>
 
-#### 进场、关注或分享消息
+#### 进场关注或分享消息
 
 B站目前已将普通用户的互动消息（进场、关注、分享等）全面迁移至 `INTERACT_WORD_V2`。
 为了在直播间高并发时极大地压缩数据体积，核心的用户身份信息和互动动作被序列化成了 **Protobuf 二进制流**，并经过 Base64 编码后统一打包在 `pb` 字段中。外层仅保留用于渲染权重的积分字段。
@@ -705,7 +705,7 @@ data字段
 开发者解码 `pb` 字段后，会得到以下结构的对象。依靠内部的 `msg_type` 字段，即可判断该用户究竟执行了什么动作。
 
 **核心互动类型 (`msg_type`) 枚举：**
-* **`1`** : **进入直播间 (Enter)**。如果数据包含 `relation_tail` (第23号字段)，则代表这是“新粉进房”，客户端可据此渲染“近期关注了你”等特殊提示。
+* **`1`** : **进入直播间 (Enter)**。如果数据包含 `relation_tail` (第23号字段)，则代表这是系统下发的特殊提示（如：“近期关注了你”、“经常看直播但未关注”）。
 * **`2`** : **关注直播间 (Follow)**。通常伴随庞大的 `uinfo` 数据（包含粉丝牌、舰队等所有详细配置）。
 * **`3`** : **分享直播间 (Share)**。用户将直播间分享到其他平台时触发。
 
@@ -726,19 +726,20 @@ data字段
 | 19 | `contribution_v2` | object | 新版贡献度信息 |
 | 20 | `group_medal` | object | 粉丝团勋章简要信息 |
 | 21 | `is_mystery` | bool | 是否为神秘人 |
-| **22** | **`uinfo`** | **object** | **极其详细的用户资料（包含头像、舰队、实名认证等结构，高等级用户进场或关注时附带）** |
-| **23** | **`relation_tail`** | **object** | **主播关系尾缀（通常在 `msg_type=1` 时附加，用于提示主播“该用户近期关注了你”）** |
+| **22** | **`uinfo`** | **object** | **极其详细的用户资料（包含头像、舰队、实名认证、身份有效期等嵌套结构，高等级用户进场或关注时附带）** |
+| **23** | **`relation_tail`** | **object** | **主播关系尾缀（通常在 `msg_type=1` 时附加，用于给主播发送交互提示）** |
 
 ---
 
 <details>
-<summary>展开查看完整的 .proto 定义文件（供代码直接使用）：</summary>
+<summary>展开查看完整的 .proto 定义文件（包含解密的 uinfo 结构）：</summary>
 
-开发者可将以下代码保存为 `INTERACT_WORD_V2.proto`，并使用 `protoc` 工具生成对应语言的解析类库，直接对解码后的 Base64 字节流进行反序列化。
+开发者可将以下代码保存为 `INTERACT_WORD_V2.proto`，并使用 `protoc` 工具生成对应语言的解析类库。相比于其他指令的 JSON，这里的 `uinfo` 被序列化成了深层嵌套的结构。
 
 ```protobuf
 syntax = "proto3";
 
+// 顶层对象
 message InteractWordV2 {
     uint64 uid = 1;
     string uname = 2;
@@ -761,9 +762,48 @@ message InteractWordV2 {
     ContributionInfoV2 contribution_v2 = 19;
     GroupMedalBrief group_medal = 20;
     bool is_mystery = 21;
-    UserInfo uinfo = 22;      // 包含头像等详细信息
+    UserInfo uinfo = 22;       // 包含头像及深层信息的对象
     UserAnchorRelation relation_tail = 23;
 }
+
+// === Uinfo 深度解剖结构 ===
+message UserInfo {
+    UserBase base = 1;
+    UserMedal medal = 2;
+    UserWealth wealth = 3;
+    string title = 4;          // 字符串形式的简单称号
+    UserGuard guard = 5;
+    UserHeadFrame uhead_frame = 6;
+    UserGuardLeader guard_leader = 7;
+}
+
+message UserBase {
+    string face = 1;           // 头像 URL
+    string name = 2;           // 昵称
+    uint32 is_mystery = 3;     // 是否神秘人
+    // 内部可能还嵌套有官方认证 official_verify 等字段
+}
+
+message UserMedal {
+    string name = 1;           // 粉丝牌名称
+    uint32 level = 2;          // 粉丝牌等级
+    string color_start = 3;    // 渐变色起始
+    string color_end = 4;      // 渐变色结束
+    string color_border = 5;   // 边框色
+    // 高级徽章颜色配置...
+}
+
+message UserGuard {
+    uint32 level = 1;          // 舰队等级 (1总督, 2提督, 3舰长)
+    string expired_str = 2;    // 【关键隐蔽字段】有效期时间戳字符串，如 "2026-05-31 23:59:59"
+}
+
+// 某些拥有特殊排行头衔的用户，会在内层挂载相关标识
+message UserTitle {
+    string old_title = 1;      // 有时用作文本特效，如 "月榜前3用户" 等特殊头衔标识
+    string title = 2;
+}
+// =========================
 
 message ContributionInfo {
     int64 grade = 1;
@@ -793,7 +833,7 @@ message FansMedalInfo {
 
 message UserAnchorRelation {
     string tail_icon = 1;
-    string tail_guide_text = 2;
+    string tail_guide_text = 2;  // 主播提示文本，如"近期关注了你，多多与TA互动吧"
     uint64 tail_type = 3;
 }
 
@@ -803,7 +843,6 @@ message GroupMedalBrief {
     uint64 is_lighted = 3;
 }
 
-// 注：第22个字段 UserInfo 是一个复杂对象，结构同其他指令的 uinfo 字段
 实际数据示例如下
 
 {
