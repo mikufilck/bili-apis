@@ -279,6 +279,8 @@ json格式
 - [PK 战况与 MVP 实时更新](#PK战况与MVP实时更新)
 - [PK 全局状态](#PK全局状态)
 - [PK 惩罚战斗结束](#PK惩罚战斗结束)
+- [PK 战斗结算与惩罚](#PK战斗结算与惩罚)
+- [PK 任务进度挂件](#PK任务进度挂件)
 - [直播间系统吐司提示](#直播间系统吐司提示)
 - [直播间用户点赞](#直播间用户点赞)
 - [直播间点赞数](#直播间点赞数)
@@ -3419,7 +3421,7 @@ data.pk_play字段 (UI与玩法特效配置)
 ```
 </details>
 
-#### PK 惩罚战斗结束
+#### PK惩罚战斗结束
 
 当 PK 正常结束并度过惩罚倒计时，或者一方强制中断/逃跑导致 PK 提前结束时，服务器会广播此指令清理状态。
 
@@ -3465,6 +3467,144 @@ data字段
   "status_msg": "",
   "template_id": "multi_conn_grid",
   "timestamp": 1776343803
+}
+```
+</details>
+
+#### PK 战斗结算与惩罚 (PK_BATTLE_SETTLE_NEW)
+
+当 PK 倒计时归零，进入结算和惩罚阶段时下发此指令。包含双方的最终比分、胜负判定（`result_type`）以及获胜方的大哥助攻榜（MVP）。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "PK_BATTLE_SETTLE_NEW" | 指示 PK 进入结算阶段 |
+| data | obj  | 结算大包 | 包含最终胜负判定与惩罚倒计时。 |
+| msg_id | str | 消息序列号 | |
+| pk_id | num | PK 唯一标识 | |
+| pk_status | num | PK 状态码 | 如 `401` 代表结算/惩罚阶段 |
+| template_id | str | UI 模板ID | 如 `"multi_conn_grid"` |
+| send_time | num | 发送时间戳 | 毫秒级 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| battle_type | num | 战斗类型 | 例如 `6` |
+| dm_conf | obj | 弹幕配置 | 包含 `bg_color` 和 `font_color` |
+| dmscore | num | 弹幕权重 | |
+| init_info | obj | 发起方结算信息 | 包含最终票数和胜负判定。 |
+| match_info | obj | 匹配方结算信息 | 包含最终票数、胜负判定以及助攻榜单（MVP）。 |
+| pk_id | num | PK 唯一标识 | |
+| pk_status | num | PK 状态码 | |
+| punish_end_time | num | 惩罚结束时间戳 | 秒级时间戳，前端用此展示惩罚倒计时 |
+| punish_name | str | 惩罚阶段名称 | 通常为 `"惩罚"` |
+| settle_status | num | 结算状态 | `1` 代表已结算 |
+| timestamp | num | 结算时间戳 | 秒级 |
+
+data.init_info / data.match_info (双方结算详情)
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| result_type | num | 胜负判定 | 核心字段！用于判定该阵营的胜负（例如 `2` 代表获胜，`-1` 或 `0` 代表失败/平局，待详细统计核实）。 |
+| room_id | num | 直播间长号 | |
+| votes | num | 最终票数 | |
+| assist_info | array/null | 助攻榜单(MVP) | 包含详细的 `uinfo` 数据，结构与 `PK_BATTLE_PROCESS_NEW` 一致。失败方通常为 `null`。 |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "PK_BATTLE_SETTLE_NEW",
+  "data": {
+    "battle_type": 6,
+    "dm_conf": {
+      "bg_color": "#72C5E2",
+      "font_color": "#FFE10B"
+    },
+    "dmscore": 1008,
+    "init_info": {
+      "assist_info": null,
+      "result_type": -1,
+      "room_id": 23856200,
+      "votes": 0
+    },
+    "match_info": {
+      "assist_info": [
+        {
+          "rank": 1,
+          "uid": 26928797,
+          "uname": "mikufilck",
+          "uinfo": { "...": "..." }
+        }
+      ],
+      "result_type": 2,
+      "room_id": 24538659,
+      "votes": 1
+    },
+    "pk_id": 394394669,
+    "pk_status": 401,
+    "punish_end_time": 1776344654,
+    "punish_name": "惩罚",
+    "settle_status": 1,
+    "timestamp": 1776344596
+  }
+}
+```
+</details>
+
+#### PK任务进度挂件
+
+用于在直播间画面中展示类似“大乱斗/PK 日常任务”进度的悬浮挂件 UI（例如：完成 X 场 PK 即可获得段位分奖励）。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "PK_WIDGET" | 指示更新 PK 任务进度挂件 |
+| data | obj  | 挂件渲染参数 | 包含任务详情和显示开关。 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| show | bool | 是否显示挂件 | `true` 显示，`false` 隐藏 |
+| title | str | 挂件标题 | |
+| text | str | 挂件文本 | |
+| task | obj | 任务详情 | 见下方展开 |
+
+data.task字段 (任务详情)
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| name | str | 任务名称 | 如 `"PK场次"` |
+| current_num | num | 当前进度 | 当前已完成的场次/进度（如 `1`） |
+| need_num | num | 目标进度 | 需要达到的总场次/进度（如 `6`） |
+| reward | str | 任务奖励文本 | 如 `"大乱斗段位分+10分"` |
+| icon | str | 任务图标 URL | |
+| task_type | num | 任务类型 | 待调查（例如 `2`） |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "PK_WIDGET",
+  "data": {
+    "task": {
+      "name": "PK场次",
+      "need_num": 6,
+      "current_num": 1,
+      "icon": "[https://i0.hdslb.com/bfs/live/2c4e31c69ced39a4f5e6e93d36ce5af28bf0d77a.png](https://i0.hdslb.com/bfs/live/2c4e31c69ced39a4f5e6e93d36ce5af28bf0d77a.png)",
+      "reward": "大乱斗段位分+10分",
+      "task_type": 2
+    },
+    "title": "",
+    "text": "",
+    "show": true
+  }
 }
 ```
 </details>
