@@ -299,6 +299,11 @@ json格式
 - [直播间在所属分区排名提升的祝福](#直播间在所属分区排名提升的祝福)
 - [直播间信息更改](#直播间信息更改)
 - [醒目留言按钮状态](#醒目留言按钮状态)
+- [互动游戏状态变更](#互动游戏状态变更)
+- [开放平台互动游戏配置大包](#开放平台互动游戏配置大包)
+- [互动游戏按钮状态变更](#互动游戏按钮状态变更)
+- [直播间控制面板动态配置](#直播间控制面板动态配置)
+- [礼物面板动态配置](#礼物面板动态配置)
 - [顶部横幅](#顶部横幅)
 - [下播的直播间](#下播的直播间)
 - [未知消息](#未知消息)
@@ -5218,6 +5223,328 @@ data字段
   "roomid": "3128551"
 }
 ```
+</details>
+
+#### 互动游戏状态变更
+
+当主播开启、关闭或变更开放平台互动玩法（如弹幕互动游戏、养成挂机游戏等）的状态时触发。这是一个轻量级的状态通知包，通常伴随着更详细的游戏配置大包一起下发。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "LIVE_INTERACT_GAME_STATE_CHANGE" | 指示互动游戏状态发生变更 |
+| data | obj  | 状态详情 | 见下方展开 |
+| recv_time | str | 接收时间 | 格式如 `"2026-04-16 22:20:31"` |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| game_name | str | 游戏大类名称 | 如 `"互动玩法"` |
+| game_id | str | 游戏实例ID | 该局互动游戏的 UUID 标识符，如 `"b36a57c1-f772-42ec-9280-b6dcea29f15c"` |
+| action | num | 动作状态码 | 如 `1` 可能代表开启/进行中 |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "LIVE_INTERACT_GAME_STATE_CHANGE",
+  "data": {
+    "game_name": "互动玩法",
+    "game_id": "b36a57c1-f772-42ec-9280-b6dcea29f15c",
+    "action": 1
+  },
+  "recv_time": "2026-04-16 22:20:31"
+}
+```
+
+</details>
+
+#### 开放平台互动游戏配置大包
+
+当主播开启“开放平台互动游戏”（如弹幕修仙、云养猫等互动玩法）时，服务器下发的核心数据包。它包含了极其庞大的游戏规则说明、弹幕触发词表、关联的专属互动礼物列表，以及供前端（客户端/Web端）渲染 iframe 互动面板的 UI 坐标配置。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "LIVE_OPEN_PLATFORM_GAME" | 开放平台互动游戏全局配置指令 |
+| data | obj  | 游戏详细配置 | 包含实例ID、序列化的游戏指令集与UI面板配置 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| msg_type | str | 消息类型 | 如 `"game_start"` 代表游戏开始。 |
+| msg_sub_type | str | 消息子类型 | 通常与 `msg_type` 保持一致。 |
+| game_name | str | 游戏名称 | 真实的互动游戏名称，如 `"猫猫养成Plus"`。 |
+| game_code | str | 游戏代码 | 游戏的内部数字标号（如 `"3548430620272881"`）。 |
+| game_id | str | 游戏实例ID | 本局游戏的唯一 UUID，与 `LIVE_INTERACT_GAME_STATE_CHANGE` 对应。 |
+| game_msg | str | **序列化的游戏信息** | **【核心字段】** 包含弹幕指令表、专属礼物表和长文本说明的 JSON 字符串。需在代码中进行二次 `JSON.parse`。见下方展开。 |
+| interactive_panel_conf | str | **序列化的UI面板配置** | 包含前端渲染该玩法小窗的坐标、缩放参数和 Webview URL 链接的 JSON 字符串。 |
+| timestamp | num | 时间戳 | 秒级。 |
+| block_uids | array | 黑名单/屏蔽列表 | 通常为空数组。 |
+| panel_status | num | 面板状态 | 如 `0`。 |
+
+data.game_msg (需反序列化的核心业务大包)
+
+> **开发者注**：将 `game_msg` 字符串解析为 JSON 对象后，将得到以下结构。这是互动玩法弹幕机和数据统计最需要的核心数据。
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| play_name | str | 玩法名称 | 同外层 `game_name`。 |
+| command_instructions | str | 弹幕指令说明文案 | 极长的一段文本，包含教观众发什么弹幕触发什么功能的说明（自带换行符 `\n`）。 |
+| gift_instructions | str | 礼物说明文案 | 说明哪些礼物能产生什么效果的文本。 |
+| play_instructions | str | 玩法简介 | 一句话简介。 |
+| dm_command | array | **弹幕触发词表** | 包含用户可发送的弹幕关键字及其效果映射。见下方展开。 |
+| gift_command | array | **专属互动礼物表** | 包含该游戏关联的所有特殊礼物的 ID、名称、价格和限制。见下方展开。 |
+| enable_custom_status | num | 自定义状态开启标识 | |
+
+dm_command 数组 (弹幕触发词映射)
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| dm_text | str | 弹幕触发词 | 观众需要发送的具体文本（如 `"喵"`, `"左"`, `"召唤喵娘"`）。 |
+| dm_key | str | 动作键值 | 后端/游戏引擎识别的按键动作指令（如 `"左1"`）。 |
+| dm_effect | str | 触发效果说明 | 用于在说明界面展示此弹幕的具体作用（如 `"往左移动1"`）。 |
+
+gift_command 数组 (专属互动礼物配置)
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| gift_id | num | 礼物ID | 唯一的礼物标识（与 `GIFT_PANEL_PLAN` 中的一致）。 |
+| gift_name | str | 礼物名称 | 如 `"毛线球"`, `"逗猫棒"`。 |
+| gift_desc | str | 礼物效果描述 | 包含具体增加多少属性的说明文案。 |
+| gift_icon | str | 静态图标URL | 礼物的展示图片。 |
+| gift_price_gold | num | 礼物价格(内部) | 通常需除以 1000（如 `98000` 实际上是 98 电池）。 |
+| gift_price_cell | num | 礼物价格(前端) | 实际的电池价值（如 `980`）。 |
+| max_send_limit | num | 最大单次连送限制 | |
+| batch_map | array | 连送选项菜单 | 用户点击赠送时弹出的连送阶梯（如 `[10, 100, 520]`）。 |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "LIVE_OPEN_PLATFORM_GAME",
+  "data": {
+    "msg_type": "game_start",
+    "game_name": "猫猫养成Plus",
+    "game_id": "b36a57c1-f772-42ec-9280-b6dcea29f15c",
+    "game_msg": "{\"play_name\":\"猫猫养成Plus\",\"command_instructions\":\"猫猫养成玩法介绍：\\n...\",\"dm_command\":[{\"dm_text\":\"喵\",\"dm_key\":\"喵\",\"dm_effect\":\"显示修炼特效\"}],\"gift_command\":[{\"gift_id\":34492,\"gift_desc\":\"直播间累计赠送200个触发特效！\",\"gift_name\":\"蝶恋花\",\"gift_price_gold\":100}]}",
+    "interactive_panel_conf": "{\"dragHeight\":50,\"dragWidth\":100,\"iframeHeight\":316,\"iframeWidth\":375,\"url\":\"//[live.bilibili.com/blackboard/activity-rjZIC2Uwy6.html](https://live.bilibili.com/blackboard/activity-rjZIC2Uwy6.html)\"}",
+    "timestamp": 1776349231
+  }
+}
+```
+
+</details>
+
+#### 互动游戏按钮状态变更
+
+当互动游戏开启或关闭时，服务器下发此指令以控制客户端界面中“互动玩法”专属按钮（通常为一个“小手柄”图标）的显示状态和点击响应行为。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "OPENPLATFORM_GAME_BUTTON_STATUS_CHANGE" | 指示更新互动游戏按钮状态 |
+| data | obj  | 按钮详情 | 包含跳转链接与状态码 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| status | num | 按钮状态 | `1` 通常代表开启/显示，`0` 代表关闭/隐藏。 |
+| jump_url | str | 交互面板地址 | 玩家点击“小手柄”按钮后弹出的半屏 Webview / iframe 页面链接。URL 中通常携带 `hybrid_half_ui` 等复杂的客户端渲染参数。 |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "OPENPLATFORM_GAME_BUTTON_STATUS_CHANGE",
+  "data": {
+    "jump_url": "[https://live.bilibili.com/blackboard/activity-rjZIC2Uwy6.html?is_live_half_webview=1&hybrid_half_ui=1,3,100p,370,0,0,0,0,0,1;2,2,375,100p,0,0,0,0,0,1](https://live.bilibili.com/blackboard/activity-rjZIC2Uwy6.html?is_live_half_webview=1&hybrid_half_ui=1,3,100p,370,0,0,0,0,0,1;2,2,375,100p,0,0,0,0,0,1)...",
+    "status": 1
+  }
+}
+```
+
+</details>
+
+#### 直播间控制面板动态配置
+
+服务器向客户端推送的播放器面板功能按钮配置指令。通常在进入直播间，或主播临时开关特定功能（如语音连麦、小窗播放、弹幕设置等）时触发，用于动态控制客户端底部的按钮入口及其对应图标和跳转链接。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "LIVE_PANEL_CHANGE_CONTENT" | 指示更新直播间控制面板按钮配置 |
+| data | obj  | 布局大包 | 包含内部设置项和外部独立悬浮按钮。 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| setting_list | array | 内部设置列表 | **隐藏在“设置/更多”菜单中的功能**（如画质、小窗播放、投屏、举报等）。 |
+| outer_list | array | 外部按钮列表 | **直接展示在播放器底部或侧边的核心按钮**（如送礼、购物车、语音连麦）。 |
+| interaction_list | array | 互动挂件列表 | 悬浮在画面边缘的特殊入口（如装扮中心、特殊活动入口）。 |
+
+> 💡 **开发者注**：以上三个数组内部包含的“按钮对象”结构完全一致。本列表剔除了大量客户端冗余的空白静态资源 URL（如 `panel_icon`, `dynamic_icon` 等），仅保留业务强相关的核心属性。
+
+按钮对象 (Button Object) 核心结构
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| biz_id | num | 业务ID | **核心标识符**。固定代表某个功能（例如 `1012`为管理员, `33`为购物车, `2`为语音连麦）。 |
+| title | str | 按钮标题 | 前端展示的主标题（如 `"语音连麦"`）。 |
+| note | str | 按钮提示 | 附加文案说明（如 `"连麦功能关闭"` 或 `"等待中"`）。 |
+| icon | str | 静态图标 | 该按钮的基础 PNG 图标。 |
+| jump_url | str | 跳转链接 | 如果此按钮触发页面跳转，则包含目标 URL（通常携带各类半屏 H5 的启动参数）。为空则代表客户端原生动作。 |
+| weight | num | 排序权重 | 决定按钮的排列顺序，数字越大通常排在越前面。 |
+| status_type | num | 状态分类 | 待调查。 |
+| type_id | num | 分组ID | 如 `1` 为常规设置，`2` 为外置交互。 |
+| custom | array/null | **动态状态配置** | **极其关键**！当按钮有多种状态时（例如连麦功能分为：关闭、可连麦、等待中、连麦中），此数组会定义每个状态对应的专属 `icon`、`note` 和 `status` 码。 |
+
+<details>
+<summary>查看消息示例 (包含连麦动态状态)：</summary>
+
+```json
+{
+  "cmd": "LIVE_PANEL_CHANGE_CONTENT",
+  "data": {
+    "setting_list": [
+      {
+        "biz_id": 1012,
+        "title": "管理员",
+        "note": "管理员",
+        "jump_url": "[https://live.bilibili.com/p/html/live-app-room-admin/index.html?is_live_half_webview=1#/roomManagement](https://live.bilibili.com/p/html/live-app-room-admin/index.html?is_live_half_webview=1#/roomManagement)"
+      }
+    ],
+    "outer_list": [
+      {
+        "biz_id": 2,
+        "title": "语音连麦",
+        "note": " ",
+        "weight": 94,
+        "custom": [
+          {
+            "status": 2,
+            "note": "连麦功能关闭",
+            "icon": "[https://i0.hdslb.com/bfs/live/e3a8c212bc493b88a33fe1853a16270e22d9a70b.png](https://i0.hdslb.com/bfs/live/e3a8c212bc493b88a33fe1853a16270e22d9a70b.png)"
+          },
+          {
+            "status": 1,
+            "note": "连麦",
+            "icon": "[https://i0.hdslb.com/bfs/live/b8cabd73def53d85bd092f4e8b3f9f6534ec2dc6.png](https://i0.hdslb.com/bfs/live/b8cabd73def53d85bd092f4e8b3f9f6534ec2dc6.png)"
+          },
+          {
+            "status": 3,
+            "note": "等待中",
+            "icon": "[https://i0.hdslb.com/bfs/live/c25451d846c5c36a56874626c6496743e6c8b726.webp](https://i0.hdslb.com/bfs/live/c25451d846c5c36a56874626c6496743e6c8b726.webp)"
+          },
+          {
+            "status": 4,
+            "note": "连麦中",
+            "icon": "[https://i0.hdslb.com/bfs/live/bcf5f48883ddbb96c8680bcc9ed2d4c11798e526.webp](https://i0.hdslb.com/bfs/live/bcf5f48883ddbb96c8680bcc9ed2d4c11798e526.webp)"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+</details>
+
+#### 礼物面板动态配置
+
+服务器向客户端推送的礼物面板更新指令。通常在进入直播间，或主播开启特定互动玩法时触发，用于动态更新礼物栏中的特定礼物列表、价格、角标（如“玩法”、“专属”）以及基础动效资源。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "GIFT_PANEL_PLAN" | 指示更新礼物面板配置 |
+| data | obj  | 配置详情 | 包含礼物列表和面板排序参数 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| gift_list | array | 礼物配置列表 | **核心数据**。包含该面板下所有新增/更新的礼物详细属性。 |
+| special_type_sort | array | 特殊类型排序 | 包含一组数字（如 `[12, 6, 14]`），控制礼物在面板中的显示顺序。 |
+| action | num | 操作类型 | 如 `1` 代表更新操作。 |
+| tab_id | num | 礼物栏分类ID | 指示这些礼物属于哪个特定的 Tab 页（如 `11` 可能是特定的玩法 Tab）。 |
+
+data.gift_list数组 (礼物对象)
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| gift_id | num | 礼物ID | 唯一的礼物数字标识。 |
+| config | obj | 礼物详细配置 | **核心业务属性**。见下方展开。 |
+| special_type | num | 特殊礼物类型 | 与外层的 `special_type_sort` 对应，决定其分类或排序。 |
+| show | bool | 是否显示 | `true` 为在面板中可见。 |
+
+data.gift_list[x].config字段 (礼物核心业务配置)
+
+> **开发者注**：原始 JSON 包中此对象极其庞大（含海量 `svga` 动画文件路径、渲染停留时长 `stay_time` 及内部商城 `goods_id` 等）。为了方便第三方开发者（如数据统计、弹幕机开发）快速接入，本表格已剔除客户端底层渲染噪音，**仅保留最具业务价值的核心字段**。
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| id | num | 礼物ID | 同外层 `gift_id`。 |
+| name | str | 礼物名称 | 如 `"逗猫棒"`, `"爱的魔法"`。 |
+| price | num | 礼物价格 | 内部数值（通常需要除以 1000 转换为实际的电池/金瓜子数量）。 |
+| coin_type | str | 货币类型 | 通常为 `"gold"` (金瓜子/电池)。 |
+| desc | str | 礼物描述 | 包含触发特效的提示（如 `"直播间累计赠送200个触发特效！"`）。 |
+| corner_mark | str | 面板角标文字 | 如 `"玩法"`，显示在礼物图标右上角。 |
+| count_map | array | 连送选项列表 | 定义用户点击赠送时弹出的批量选项（如 `[{"num": 1}, {"num": 10}, {"num": 520}]`）。 |
+| max_send_limit | num | 最大赠送限制 | 一次性最多能送出的数量。 |
+| img_basic | str | 静态图标URL | 礼物的基础静态 PNG 图片。 |
+| gif / webp | str | 动态图标URL | 礼物面板中播放的动态缩略图。 |
+| web_light / web_dark | obj | 角标颜色配置 | 针对网页端明暗主题的角标背景颜色设定（包含 `corner_color_bg` 等）。 |
+
+<details>
+<summary>查看消息示例 (精简版)：</summary>
+
+```json
+{
+  "cmd": "GIFT_PANEL_PLAN",
+  "data": {
+    "action": 1,
+    "tab_id": 11,
+    "special_type_sort": [12, 6, 14, 13, 5, 7, 8, 9],
+    "gift_list": [
+      {
+        "gift_id": 34494,
+        "show": true,
+        "special_type": 6,
+        "config": {
+          "id": 34494,
+          "name": "逗猫棒",
+          "price": 98000,
+          "coin_type": "gold",
+          "corner_mark": "玩法",
+          "desc": "喵！这是逗猫棒哎！猫猫超超超喜欢！来和猫猫一起动次打次~",
+          "img_basic": "[https://s1.hdslb.com/bfs/open-live/195eba4b97b6a2c4da871b147c5066734fff214c.png](https://s1.hdslb.com/bfs/open-live/195eba4b97b6a2c4da871b147c5066734fff214c.png)",
+          "gif": "[https://i0.hdslb.com/bfs/open-live/2df934703b29dcb9a7dc92a516e82b3522a6f281.gif](https://i0.hdslb.com/bfs/open-live/2df934703b29dcb9a7dc92a516e82b3522a6f281.gif)",
+          "max_send_limit": 2040,
+          "count_map": [
+            { "num": 1 },
+            { "num": 10 },
+            { "num": 520 }
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
 </details>
 
 #### 顶部横幅
