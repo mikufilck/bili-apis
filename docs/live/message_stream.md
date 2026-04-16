@@ -278,6 +278,8 @@ json格式
 - [PK 礼物积分同步V2](#PK礼物积分同步V2)
 - [PK 战况与 MVP 实时更新](#PK战况与MVP实时更新)
 - [PK 全局状态](#PK全局状态)
+- [PK 惩罚战斗结束](#PK惩罚战斗结束)
+- [直播间系统吐司提示](#直播间系统吐司提示)
 - [直播间用户点赞](#直播间用户点赞)
 - [直播间点赞数](#直播间点赞数)
 - [直播间发红包弹幕](#直播间发红包弹幕)
@@ -3227,7 +3229,7 @@ assist_info 数组 (助攻大哥详细信息)
 
 #### PK全局状态
 
-包含当前 PK 对局的所有元数据，权限极高。通常用于让前端校准倒计时时钟、确认惩罚阶段的时间点、拉取双方连胜记录以及加载特殊的 UI 颜色配置。
+包含当前 PK 对局的所有元数据，权限极高。通常用于让前端校准倒计时时钟、确认惩罚阶段的时间点、拉取双方连胜记录、加载特殊的 UI 颜色配置，以及处理逃跑/异常中断状态。
 
 json格式
 
@@ -3250,7 +3252,7 @@ data字段
 | pk_basic | obj | PK 核心时间轴 | **核心节点，控制比赛的生死倒计时。** |
 | pk_group | obj/null | PK 群组信息 | |
 | pk_match_info | obj/null | PK 匹配信息 | |
-| pk_play | obj | 玩法与UI配置 | 包含前端渲染特效和弹幕颜色的设定。 |
+| pk_play | obj | 玩法与UI配置 | 包含前端渲染特效、弹幕颜色及逃跑控制配置。 |
 | mill_timestamp | num | 毫秒级时间戳 | |
 | timestamp | num | 秒级时间戳 | |
 
@@ -3263,17 +3265,26 @@ data.members数组 (阵营详细数据)
 | face | str | 阵营主播头像 | |
 | room_id | num | 阵营直播间号 | |
 | rank | num | 当前排名 | 如 `1` 为领先方，`2` 为落后方。 |
+| rank_v2 | num | 新版排名 | |
 | votes | num | 阵营总票数 | 真实 PK 分数。 |
 | votes_text | str | 展示票数 | |
 | golds | num | 获得金币/积分数 | |
-| assist_info | array | 助攻榜单 (MVP) | 包含贡献最高的大哥数组，格式与 `PK_BATTLE_PROCESS_NEW` 完全一致。 |
+| assist_info | array | 助攻榜单 (MVP) | 包含贡献最高的大哥数组，格式与 `PK_BATTLE_PROCESS_NEW` 一致。 |
 | battle_level | obj | 战斗等级/挂件 | 包含 `icon` 和挂件交互的 H5 `url`。 |
 | date_streak | num | 连胜次数 | |
 | is_latest_streak | bool | 是否正在连胜 | |
 | is_winner | num | 获胜标志 | `0` 暂无结果，`1` 获胜。 |
 | status | num | 阵营状态 | |
+| capsules_v2 | obj/null | 新版胶囊特效 | |
+| group_id | num | 分组ID | |
+| is_follow | num | 是否已关注对手 | |
+| order | num | 排序权重 | |
+| pk_cards | obj/null | PK专属道具卡 | 如暴击卡、护盾等数据。 |
+| pk_multiple_status | num | 多倍积分状态 | |
+| play | obj/null | 玩法数据 | |
+| power | str | 战力值 | 可能用于特殊的战力比拼玩法。 |
 
-data.pk_basic字段 (赛事核心时间轴)
+data.pk_basic字段 (赛事核心时间轴与属性)
 
 | 字段 | 类型 |   内容  |    备注   |
 | ---- | ---- | ------ | --------- |
@@ -3284,111 +3295,210 @@ data.pk_basic字段 (赛事核心时间轴)
 | start_time | num | PK 开始时间 | Unix 时间戳 (秒)。 |
 | end_time | num | PK 结束时间 | Unix 时间戳 (秒)，**前端用此计算比赛剩余倒计时。** |
 | punish_end_time | num | 惩罚结束时间 | Unix 时间戳 (秒)，**失败方接受惩罚的截止时间。** |
-| status | num | PK 状态码 | `201` 通常为进行中。 |
+| status | num | PK 状态码 | `201` 通常为进行中，`1001` 等可能为异常结束。 |
+| status_msg | str | 状态提示文案 | 异常时的文字提示，如 `"PK合流失败，请重新进行匹配"`。 |
 | punish_text | str | 惩罚文本 | 通常为 `"惩罚"`。 |
 | main_page | str | H5活动页URL | |
 | season_id | num | 当前赛季ID | |
 | sprint_duration | num | 冲刺阶段时长 | |
+| template_id | str | UI模板ID | 如 `"multi_conn_grid"`。 |
+| type | num | PK大类 | |
+| sub_type | num | PK子玩法类型 | |
+| muti_pk_type | num | 多人PK类型 | 例如 `3` 或 `4`。 |
+| satellite_info | obj/null | 待调查 | |
 
-data.pk_play字段 (UI与特效配置)
+data.pk_play字段 (UI与玩法特效配置)
 
 | 字段 | 类型 |   内容  |    备注   |
 | ---- | ---- | ------ | --------- |
 | dm_conf | obj | 弹幕配置 | 包含 `bg_color` (背景色) 和 `font_color` (字体色)。 |
 | pre_duration | num | 准备时长 | 如 `10` 秒。 |
 | show_streak | bool | 是否显示连胜特效 | |
+| escape | obj | 逃跑控制与提示 | 包含 `count` (逃跑次数), `puni_time` (惩罚时间), 以及 `tips` (提示语，如 `"是否要提前结束PK?"`)。 |
+| final_conf | obj | 决战时刻配置 | 最后冲刺阶段的配置 (`start_time`, `end_time`, `switch`)。 |
+| pk_score_multiple_play | obj/null | PK积分翻倍配置 | 翻倍玩法相关。 |
+
+<details>
+<summary>查看消息示例 (包含逃跑提示的情况)：</summary>
+
+```json
+{
+  "cmd": "PK_INFO",
+  "data": {
+    "audience_open": false,
+    "invite_pk_resp": null,
+    "members": [
+      {
+        "assist_info": [
+          {
+            "award_content": "",
+            "face": "[https://i0.hdslb.com/bfs/face/be1dd12a0c5dbd296bdf09246b6e5ee5093c0324.jpg](https://i0.hdslb.com/bfs/face/be1dd12a0c5dbd296bdf09246b6e5ee5093c0324.jpg)",
+            "is_mystery": false,
+            "rank": 1,
+            "uid": 36711753,
+            "uname": "橘町w"
+          }
+        ],
+        "battle_level": {
+          "icon": "[https://i0.hdslb.com/bfs/live/4022aa441d1bcdd2f98ac1f15767f5c8994be01d.png](https://i0.hdslb.com/bfs/live/4022aa441d1bcdd2f98ac1f15767f5c8994be01d.png)",
+          "url": "[https://live.bilibili.com/activity/live-activity-battle/index.html?room_id=24538659](https://live.bilibili.com/activity/live-activity-battle/index.html?room_id=24538659)..."
+        },
+        "capsules": null,
+        "capsules_v2": null,
+        "date_streak": 0,
+        "face": "[https://i1.hdslb.com/bfs/face/a415ce881066fb8f71132253effcdde62540bc05.jpg](https://i1.hdslb.com/bfs/face/a415ce881066fb8f71132253effcdde62540bc05.jpg)",
+        "golds": 108100,
+        "group_id": 0,
+        "is_follow": 0,
+        "is_latest_streak": false,
+        "is_winner": 1,
+        "order": 0,
+        "pk_cards": null,
+        "pk_multiple_status": 0,
+        "play": null,
+        "power": "",
+        "rank": 1,
+        "rank_v2": 0,
+        "room_id": 24538659,
+        "status": 3,
+        "uid": 512033026,
+        "uname": "西妮贝尔",
+        "votes": 1981,
+        "votes_text": "1981"
+      }
+    ],
+    "mill_timestamp": 1776343803553,
+    "pk_basic": {
+      "biz_session_id": "1776343426074512033026",
+      "end_time": 1776343736,
+      "init_id": 24538659,
+      "init_uid": 512033026,
+      "main_page": "[https://live.bilibili.com/activity/live-activity-battle/index.html](https://live.bilibili.com/activity/live-activity-battle/index.html)...",
+      "muti_pk_type": 3,
+      "pk_id": 394393841,
+      "punish_end_time": 1776343799,
+      "punish_text": "惩罚",
+      "satellite_info": null,
+      "season_id": 96,
+      "sprint_duration": 10,
+      "start_time": 1776343426,
+      "status": 1001,
+      "status_msg": "",
+      "sub_type": 8,
+      "template_id": "multi_conn_grid",
+      "type": 2
+    },
+    "pk_group": null,
+    "pk_match_info": null,
+    "pk_play": {
+      "dm_conf": {
+        "bg_color": "#72C5E2",
+        "font_color": "#FFE10B"
+      },
+      "escape": {
+        "count": 0,
+        "puni_time": 0,
+        "tips": "是否要提前结束PK?"
+      },
+      "final_conf": {
+        "end_time": 0,
+        "start_time": 0,
+        "switch": 0
+      },
+      "pk_score_multiple_play": null,
+      "pre_duration": 10,
+      "show_streak": false
+    },
+    "timestamp": 1776343803
+  },
+  "msg_id": "92054406934093824:1000:1000",
+  "p_is_ack": true,
+  "p_msg_type": 1,
+  "send_time": 1776343803605
+}
+```
+</details>
+
+#### PK 惩罚战斗结束
+
+当 PK 正常结束并度过惩罚倒计时，或者一方强制中断/逃跑导致 PK 提前结束时，服务器会广播此指令清理状态。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "PK_BATTLE_PUNISH_END" | 指示 PK 阶段彻底结束，准备恢复常规直播间 UI |
+| data | obj  | 战斗类型数据 | 见下方展开 |
+| msg_id | str | 消息序列号 | |
+| p_is_ack | bool | 是否需要回执 | |
+| p_msg_type | num | 消息协议类型 | |
+| pk_id | num | PK 唯一标识 | |
+| pk_status | num | 结束状态码 | `1001` 通常代表非正常/提前终止 |
+| status_msg | str | 状态信息 | |
+| template_id | str | UI 模板ID | 如 `"multi_conn_grid"` |
+| send_time | num | 发送时间戳 | 毫秒级 |
+| timestamp | num | 时间戳 | 秒级 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| battle_type | num | 战斗大类 | |
+| battle_sub_type | num | 战斗子类 | |
 
 <details>
 <summary>查看消息示例：</summary>
 
 ```json
 {
-  "cmd": "PK_INFO",
+  "cmd": "PK_BATTLE_PUNISH_END",
   "data": {
-    "audience_open": true,
-    "invite_pk_resp": null,
-    "members": [
-      {
-        "assist_info": [],
-        "battle_level": {
-          "icon": "[https://i0.hdslb.com/bfs/live/6d1f50f4684b4ddc03cbaafc1bd7ad4134503499.png](https://i0.hdslb.com/bfs/live/6d1f50f4684b4ddc03cbaafc1bd7ad4134503499.png)",
-          "url": "[https://live.bilibili.com/activity/live-activity-battle/index.html](https://live.bilibili.com/activity/live-activity-battle/index.html)?..."
-        },
-        "capsules": null,
-        "date_streak": 0,
-        "face": "[https://i0.hdslb.com/bfs/face/b87c61ef3755bf2661ade8f9865bc9e09f572d18.jpg](https://i0.hdslb.com/bfs/face/b87c61ef3755bf2661ade8f9865bc9e09f572d18.jpg)",
-        "golds": 0,
-        "is_winner": 0,
-        "rank": 2,
-        "room_id": 1940980374,
-        "status": 0,
-        "uid": 3546890274605289,
-        "uname": "阿狸不吃梨lili",
-        "votes": 0,
-        "votes_text": "0"
-      },
-      {
-        "assist_info": [
-          {
-            "award_content": "",
-            "face": "[https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg](https://i2.hdslb.com/bfs/face/6a0dd36ba7fa18e84c6527c87beba02a5d2de3f9.jpg)",
-            "is_mystery": false,
-            "rank": 1,
-            "uid": 26928797,
-            "uname": "mikufilck"
-          }
-        ],
-        "battle_level": {
-          "icon": "[https://i0.hdslb.com/bfs/live/4022aa441d1bcdd2f98ac1f15767f5c8994be01d.png](https://i0.hdslb.com/bfs/live/4022aa441d1bcdd2f98ac1f15767f5c8994be01d.png)",
-          "url": "[https://live.bilibili.com/activity/live-activity-battle/index.html](https://live.bilibili.com/activity/live-activity-battle/index.html)?..."
-        },
-        "capsules": null,
-        "date_streak": 0,
-        "face": "[https://i0.hdslb.com/bfs/face/f45351c32455b2c7246a07d206acc51f4a8671ff.jpg](https://i0.hdslb.com/bfs/face/f45351c32455b2c7246a07d206acc51f4a8671ff.jpg)",
-        "golds": 100,
-        "is_winner": 0,
-        "rank": 1,
-        "room_id": 1950852193,
-        "status": 0,
-        "uid": 3546607121336514,
-        "uname": "枳念念",
-        "votes": 1,
-        "votes_text": "1"
-      }
-    ],
-    "mill_timestamp": 1774800505423,
-    "pk_basic": {
-      "biz_session_id": "17748003749063546890274605289",
-      "end_time": 1774800690,
-      "init_id": 1940980374,
-      "init_uid": 3546890274605289,
-      "main_page": "[https://live.bilibili.com/activity/live-activity-battle/index.html](https://live.bilibili.com/activity/live-activity-battle/index.html)?...",
-      "muti_pk_type": 4,
-      "pk_id": 393724504,
-      "punish_end_time": 1774800750,
-      "punish_text": "惩罚",
-      "season_id": 95,
-      "sprint_duration": 10,
-      "start_time": 1774800380,
-      "status": 201,
-      "sub_type": 5,
-      "template_id": "multi_conn_grid",
-      "type": 6
-    },
-    "pk_play": {
-      "dm_conf": {
-        "bg_color": "#72C5E2",
-        "font_color": "#FFE10B"
-      },
-      "pre_duration": 10,
-      "show_streak": false
-    },
-    "timestamp": 1774800505
+    "battle_sub_type": 0,
+    "battle_type": 2
   },
-  "msg_id": "90436141525771264:1000:1000",
+  "msg_id": "92054406915172352:1000:1000",
   "p_is_ack": true,
   "p_msg_type": 1,
-  "send_time": 1774800505448
+  "pk_id": 394393841,
+  "pk_status": 1001,
+  "send_time": 1776343803587,
+  "status_msg": "",
+  "template_id": "multi_conn_grid",
+  "timestamp": 1776343803
+}
+```
+</details>
+
+#### 直播间系统吐司提示 (LIVE_ROOM_TOAST_MESSAGE)
+
+服务器向当前直播间下发的全局系统级文字提示。客户端收到后通常会在画面中央或底部以半透明黑底白字的形式（Toast）弹出提示框。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "LIVE_ROOM_TOAST_MESSAGE" | 系统级的 Toast 文本提示指令 |
+| data | obj  | 提示详情 | 见下方展开 |
+| timestamp | num | 时间戳 | 外层秒级时间戳 |
+
+data字段
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| message | str | 提示文本 | **核心内容**。如 `"对方主播结束了视频连线"`，前端直接展示此文本。 |
+| timestamp | num | 时间戳 | 内层秒级时间戳 |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "LIVE_ROOM_TOAST_MESSAGE",
+  "timestamp": 1776343809,
+  "data": {
+    "timestamp": 1776343809,
+    "message": "对方主播结束了视频连线"
+  }
 }
 ```
 </details>
