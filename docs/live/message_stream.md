@@ -3297,7 +3297,7 @@ data.pk_basic字段 (赛事核心时间轴与属性)
 | start_time | num | PK 开始时间 | Unix 时间戳 (秒)。 |
 | end_time | num | PK 结束时间 | Unix 时间戳 (秒)，**前端用此计算比赛剩余倒计时。** |
 | punish_end_time | num | 惩罚结束时间 | Unix 时间戳 (秒)，**失败方接受惩罚的截止时间。** |
-| status | num | PK 状态码 | `201` 通常为进行中，`1001` 等可能为异常结束。 |
+| status | num | PK 状态码 | `201` 为进行中，`401` 为正常结算与惩罚倒计时，`601` 为PK合流失败，`1001` 为逃跑/异常强制中断。 |
 | status_msg | str | 状态提示文案 | 异常时的文字提示，如 `"PK合流失败，请重新进行匹配"`。 |
 | punish_text | str | 惩罚文本 | 通常为 `"惩罚"`。 |
 | main_page | str | H5活动页URL | |
@@ -3308,6 +3308,24 @@ data.pk_basic字段 (赛事核心时间轴与属性)
 | sub_type | num | PK子玩法类型 | |
 | muti_pk_type | num | 多人PK类型 | 例如 `3` 或 `4`。 |
 | satellite_info | obj/null | 待调查 | |
+
+data.members.capsules_v2数组 (PK 限时挑战特效胶囊)
+
+当 PK 过程中触发了限时翻倍、连击任务等局内挑战时，此数组会包含相关的倒计时和提示信息，用于前端渲染悬浮的胶囊横幅。
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| id | str | 胶囊ID | 如 `"1"`，`"2"`，或 `"10"` |
+| text | str | 提示文本 | 如 `"完成挑战获得<%2倍%>PK值"`、`"差1人翻倍"` 或 `"挑战失败"` |
+| capsule_type | num | 胶囊类型 | 例如 `4` 或 `5` |
+| biz_style_type | num | 业务样式类型 | 决定前端 UI 的渲染样式（如颜色或闪烁特效） |
+| end_time | num | 截止时间戳 | 秒级。限时任务结束的时间，为 `0` 代表无倒计时 |
+| progress | num | 进度 | 任务当前进度 |
+| url | str | 跳转链接 | 包含交互协议（如 `bilibili://live/...`）用于点击唤起面板 |
+| animation_text | str | 动画文本 | 待调查 |
+| blink_event_type | num | 闪烁事件类型 | 待调查 |
+| show_terminal | num | 显示端标识 | 待调查 |
+| toast | str | 浮窗提示 | 待调查 |
 
 data.pk_play字段 (UI与玩法特效配置)
 
@@ -3471,7 +3489,7 @@ data字段
 ```
 </details>
 
-#### PK 战斗结算与惩罚 (PK_BATTLE_SETTLE_NEW)
+#### PK战斗结算与惩罚
 
 当 PK 倒计时归零，进入结算和惩罚阶段时下发此指令。包含双方的最终比分、胜负判定（`result_type`）以及获胜方的大哥助攻榜（MVP）。
 
@@ -3609,7 +3627,7 @@ data.task字段 (任务详情)
 ```
 </details>
 
-#### 直播间系统吐司提示 (LIVE_ROOM_TOAST_MESSAGE)
+#### 直播间系统吐司提示
 
 服务器向当前直播间下发的全局系统级文字提示。客户端收到后通常会在画面中央或底部以半透明黑底白字的形式（Toast）弹出提示框。
 
