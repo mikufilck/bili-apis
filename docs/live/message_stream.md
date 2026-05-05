@@ -274,10 +274,12 @@ json格式
 - [直播间高能榜](#直播间高能榜)
 - [直播间高能用户数量](#直播间高能用户数量)
 - [用户到达直播间高能榜前三名的消息](#用户到达直播间高能榜前三名的消息)
+- [PK 匹配成功与准备阶段](#PK匹配成功与准备阶段)
+- [PK 战斗开始](#PK战斗开始)
 - [PK 礼物积分同步](#PK礼物积分同步)
 - [PK 礼物积分同步V2](#PK礼物积分同步V2)
 - [PK 战况与 MVP 实时更新](#PK战况与MVP实时更新)
-- [PK 全局状态](#PK全局状态)
+- [视频 PK 全局状态](#视频PK全局状态)
 - [PK 惩罚战斗结束](#PK惩罚战斗结束)
 - [PK 战斗结算与惩罚](#PK战斗结算与惩罚)
 - [PK 任务进度挂件](#PK任务进度挂件)
@@ -2765,6 +2767,165 @@ data字段
 
 </details>
 
+#### PK匹配成功与准备阶段
+
+当主播成功匹配到 PK 对手时，服务器会立刻下发此指令。它包含了对手的基本资料，并通知客户端开启开战前的准备倒计时（通常为 10 秒）。倒计时结束后，将正式进入 `PK_BATTLE_START_NEW` 阶段。目前系统会同时下发 `PK_BATTLE_PRE_NEW` 和 `PK_BATTLE_PRE` 两个包以兼容旧版本。
+
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "PK_BATTLE_PRE_NEW" | 指示 PK 匹配成功，进入准备阶段。 |
+| data | obj  | 准备配置 | 包含对手信息与准备倒计时时长。见下方展开。 |
+| pk_id | num | PK 唯一标识 | 本局 PK 的全局唯一 ID。 |
+| pk_status | num | PK 状态码 | 此时为 **`101`**（代表匹配成功，准备中）。 |
+| msg_id | str | 消息序列号 | |
+| p_is_ack | bool | 是否需要回执 | |
+| p_msg_type | num | 消息协议类型 | |
+| send_time | num | 发送时间戳 | 毫秒级 Unix 时间戳。 |
+| timestamp | num | 时间戳 | 秒级 Unix 时间戳。 |
+
+data字段 (对手信息与倒计时配置)
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| uid | num | 对手UID | 匹配到的对方主播的 UID。 |
+| uname | str | 对手昵称 | 匹配到的对方主播的昵称。 |
+| face | str | 对手头像 | 匹配到的对方主播的头像 URL。 |
+| room_id | num | 对手直播间号 | 匹配到的对方主播的长号直播间 ID。 |
+| is_followed | num | 是否已关注 | 本方是否已经关注了对方（如 `0` 代表未关注）。 |
+| pre_timer | num | 准备倒计时时长 | **核心字段**。客户端会根据此数字（通常为 `10`）渲染倒计时动画，倒数结束后正式开打。 |
+| pk_votes_name | str | 票数名称 | 前端展示文案，如 `"PK值"`。 |
+| season_id | num | 当前赛季ID | |
+| battle_type | num | 战斗大类 | `1` 为常规/大乱斗，`6` 为视频 PK。 |
+| battle_sub_type | num | 战斗子类 | 例如 `0`。 |
+| match_type | num | 匹配类型 | `1` 为大乱斗随机匹配，`5` 为视频 PK 匹配。 |
+| end_win_task | obj/null | 结束获胜任务 | 待调查（某些特殊 PK 模式下可能带有获胜条件）。 |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "PK_BATTLE_PRE_NEW",
+  "pk_id": 395115932,
+  "pk_status": 101,
+  "status_msg": "",
+  "timestamp": 1777979559,
+  "data": {
+    "is_followed": 0,
+    "uname": "堇壹色",
+    "face": "[https://i1.hdslb.com/bfs/face/6ef170d6fffbcfa482ff525b6c7df512fc89499e.jpg](https://i1.hdslb.com/bfs/face/6ef170d6fffbcfa482ff525b6c7df512fc89499e.jpg)",
+    "uid": 12233542,
+    "room_id": 5318148,
+    "season_id": 97,
+    "pre_timer": 10,
+    "pk_votes_name": "PK值",
+    "end_win_task": null,
+    "battle_type": 1,
+    "match_type": 1,
+    "battle_sub_type": 0
+  }
+}
+```
+
+</details>
+
+#### PK战斗开始
+
+当主播成功匹配到对手，PK 进度条正式出现并开始倒计时时，服务器会下发此指令。它包含了本局 PK 的所有关键时间节点（开始、冻结、结束）以及双方的初始连胜状态。目前 B 站服务器会同时下发 `PK_BATTLE_START_NEW` 和 `PK_BATTLE_START` 两个包。它们的数据结构完全一致，此举是为了向下兼容旧版客户端。
+json格式
+
+| 字段 | 类型 | 内容   | 备注      |
+| ---- | ---- | ------ | --------- |
+| cmd  | str  | "PK_BATTLE_START_NEW" | 指示 PK 战斗正式开始。 |
+| data | obj  | PK初始配置 | 包含时间轴和双方阵营的基础信息。见下方展开。 |
+| pk_id | num | PK 唯一标识 | 本局 PK 的全局唯一 ID。 |
+| pk_status | num | PK 状态码 | 此时通常为 `201`（代表战斗进行中）。 |
+| msg_id | str | 消息序列号 | |
+| p_is_ack | bool | 是否需要回执 | |
+| p_msg_type | num | 消息协议类型 | |
+| send_time | num | 发送时间戳 | 毫秒级 Unix 时间戳。 |
+| timestamp | num | 时间戳 | 秒级 Unix 时间戳。 |
+
+data字段 (核心配置)
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| battle_type | num | 战斗大类 | 例如 `1`。 |
+| battle_sub_type | num | 战斗子类 | 例如 `0`。 |
+| pk_start_time | num | PK 开始时间 | 秒级时间戳。战斗正式拉开帷幕的时间。 |
+| pk_countdown | num | PK 倒计时截止时间 | 秒级时间戳。通常为常规送礼 PK 阶段结束的时间点。 |
+| pk_frozen_time | num | PK 冻结时间 | 秒级时间戳。某些特殊玩法下锁榜或冻结状态的时间点。 |
+| pk_end_time | num | PK 彻底结束时间 | 秒级时间戳。包含惩罚阶段在内的完整 PK 流程终结时间。 |
+| init_info | obj | 发起方初始信息 | 包含发起方的房间号和历史连胜数据。 |
+| match_info | obj | 匹配方初始信息 | 包含匹配方的房间号和历史连胜数据。 |
+| final_conf | obj/null | 决战时刻配置 | 控制最后阶段（如偷塔阶段）的配置。大乱斗模式为对象，视频 PK 模式下无此机制，固定返回 `null`。 |
+| final_hit_votes | num | 决胜击票数 | 待调查。 |
+| pk_votes_add | num | 增加的票数 | |
+| pk_votes_name | str | 票数名称 | 前端展示文案，如 `"PK值"`。 |
+| pk_votes_type | num | 票数类型 | |
+| star_light_msg | str | 星光消息 | 待调查。 |
+
+data.init_info / data.match_info (双方初始状态)
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| room_id | num | 直播间长号 | 对应阵营的直播间 ID。 |
+| date_streak | num | 连胜次数 | 该阵营在本次 PK 开始前所保持的连胜场次。 |
+
+data.final_conf (最后冲刺/决战配置，仅在该字段不为 null 时存在)
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| switch | num | 开关状态 | 如 `0` 代表未开启特殊决战机制。 |
+| start_time | num | 决战开始时间 | |
+| end_time | num | 决战结束时间 | |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "PK_BATTLE_START_NEW",
+  "data": {
+    "battle_sub_type": 0,
+    "battle_type": 1,
+    "final_conf": {
+      "end_time": 0,
+      "start_time": 0,
+      "switch": 0
+    },
+    "final_hit_votes": 0,
+    "init_info": {
+      "date_streak": 0,
+      "room_id": 5318148
+    },
+    "match_info": {
+      "date_streak": 0,
+      "room_id": 1964690546
+    },
+    "pk_countdown": 1777979859,
+    "pk_end_time": 1777979879,
+    "pk_frozen_time": 1777979869,
+    "pk_start_time": 1777979569,
+    "pk_votes_add": 0,
+    "pk_votes_name": "PK值",
+    "pk_votes_type": 0,
+    "star_light_msg": ""
+  },
+  "msg_id": "93769632235703296:1000:1000",
+  "p_is_ack": true,
+  "p_msg_type": 1,
+  "pk_id": 395115932,
+  "pk_status": 201,
+  "send_time": 1777979569922,
+  "timestamp": 1777979569
+}
+```
+
+</details>
+
 #### PK礼物积分同步
 
 在直播间进行连麦或 PK 状态时有人送礼，服务器会下发此包。V1 版本不仅包含实时的 PK 积分同步，还包含了极其详尽的前端 UI 渲染指令（如 WebRTC 的推流分辨率、播放器切割网格坐标等）。
@@ -3234,16 +3395,17 @@ assist_info 数组 (助攻大哥详细信息)
 ```
 </details>
 
-#### PK全局状态
+#### 视频PK全局状态
 
-包含当前 PK 对局的所有元数据，权限极高。通常用于让前端校准倒计时时钟、确认惩罚阶段的时间点、拉取双方连胜记录、加载特殊的 UI 颜色配置，以及处理逃跑/异常中断状态。
+包含当前视频 PK（或多人连麦 PK）对局的所有元数据，权限极高。经实测，此指令**仅在视频 PK（如 `battle_type: 6`）等特定模式下下发**。常规对战或大乱斗模式（`battle_type: 1`）通常不包含此大包。
+> 它主要用于让前端校准倒计时时钟、确认惩罚阶段的时间点、拉取双方连胜记录、加载特殊的 UI 颜色配置，以及处理逃跑/异常中断状态。
 
 json格式
 
-| 字段 | 类型 |   内容  |    备注   |
+| 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd  | str | "PK_INFO" | PK 全局元数据大包。 |
-| data | obj | PK 详细信息 | 包含时间轴、双方阵营大全、玩法配置等。 |
+| cmd  | str  | "PK_INFO" | 视频 PK 全局元数据大包。 |
+| data | obj  | PK 详细信息 | 包含时间轴、双方阵营大全、玩法配置等。 |
 | msg_id | str | 消息序列号 | |
 | p_is_ack | bool | 是否需要回执 | |
 | p_msg_type | num | 消息协议类型 | |
@@ -3251,8 +3413,8 @@ json格式
 
 data字段
 
-| 字段 | 类型 |   内容  |    备注   |
-| ---- | ---- | ------ | --------- |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
 | audience_open | bool | 观众面板是否开启 | |
 | invite_pk_resp | obj/null | 邀请回复信息 | |
 | members | array | 双方详细阵营数据 | **核心节点，包含双方的完整票数、连胜记录和助攻榜。** |
@@ -3265,8 +3427,8 @@ data字段
 
 data.members数组 (阵营详细数据)
 
-| 字段 | 类型 |   内容  |    备注   |
-| ---- | ---- | ------ | --------- |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
 | uid | num | 阵营主播UID | |
 | uname | str | 阵营主播昵称 | |
 | face | str | 阵营主播头像 | |
@@ -3282,7 +3444,7 @@ data.members数组 (阵营详细数据)
 | is_latest_streak | bool | 是否正在连胜 | |
 | is_winner | num | 获胜标志 | `0` 暂无结果，`1` 获胜。 |
 | status | num | 阵营状态 | |
-| capsules_v2 | obj/null | 新版胶囊特效 | |
+| capsules_v2 | obj/null | 新版胶囊特效 | 见下方展开。 |
 | group_id | num | 分组ID | |
 | is_follow | num | 是否已关注对手 | |
 | order | num | 排序权重 | |
@@ -3293,8 +3455,8 @@ data.members数组 (阵营详细数据)
 
 data.pk_basic字段 (赛事核心时间轴与属性)
 
-| 字段 | 类型 |   内容  |    备注   |
-| ---- | ---- | ------ | --------- |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
 | pk_id | num | 本局 PK ID | 全局唯一标识符。 |
 | biz_session_id | str | 连麦会话ID | 匹配底层的连麦链路。 |
 | init_id | num | 发起方房间号 | |
@@ -3302,49 +3464,59 @@ data.pk_basic字段 (赛事核心时间轴与属性)
 | start_time | num | PK 开始时间 | Unix 时间戳 (秒)。 |
 | end_time | num | PK 结束时间 | Unix 时间戳 (秒)，**前端用此计算比赛剩余倒计时。** |
 | punish_end_time | num | 惩罚结束时间 | Unix 时间戳 (秒)，**失败方接受惩罚的截止时间。** |
-| status | num | PK 状态码 | `201` 为进行中，`401` 为正常结算与惩罚倒计时，`601` 为PK合流失败，`610`为逃跑/异常断开， `1001` 为彻底关闭。 |
-| status_msg | str | 状态提示文案 | 异常时的文字提示，如 `"PK合流失败，请重新进行匹配"`。 |
+| status | num | PK 状态码 | `101`为准备阶段，`201`为进行中，`401`为正常结算，`601`为合流失败，`1001`为彻底终结。 |
+| status_msg | str | 状态提示文案 | 异常时的文字提示。 |
 | punish_text | str | 惩罚文本 | 通常为 `"惩罚"`。 |
 | main_page | str | H5活动页URL | |
 | season_id | num | 当前赛季ID | |
 | sprint_duration | num | 冲刺阶段时长 | |
 | template_id | str | UI模板ID | 如 `"multi_conn_grid"`。 |
-| type | num | PK大类 | |
+| type | num | PK大类 | 如 `6` 为视频PK。 |
 | sub_type | num | PK子玩法类型 | |
 | muti_pk_type | num | 多人PK类型 | 例如 `3` 或 `4`。 |
 | satellite_info | obj/null | 待调查 | |
 
-data.members.capsules_v2数组 (PK 限时挑战特效胶囊)
+data.members.capsules数组 (开局破冰/状态加成胶囊)
 
-当 PK 过程中触发了限时翻倍、连击任务等局内挑战时，此数组会包含相关的倒计时和提示信息，用于前端渲染悬浮的胶囊横幅。
+通常在视频 PK 等模式开局时下发，用于展示类似“首次送礼翻倍”的悬浮提示。
 
 | 字段 | 类型 | 内容   |   备注   |
 | ---- | ---- | ------ | -------- |
-| id | str | 胶囊ID | 如 `"1"`，`"2"`，或 `"10"` |
-| text | str | 提示文本 | 如 `"完成挑战获得<%2倍%>PK值"`、`"差1人翻倍"` 或 `"挑战失败"` |
-| capsule_type | num | 胶囊类型 | 例如 `4` 或 `5` |
-| biz_style_type | num | 业务样式类型 | 决定前端 UI 的渲染样式（如颜色或闪烁特效） |
-| end_time | num | 截止时间戳 | 秒级。限时任务结束的时间，为 `0` 代表无倒计时 |
-| progress | num | 进度 | 任务当前进度 |
-| url | str | 跳转链接 | 包含交互协议（如 `bilibili://live/...`）用于点击唤起面板 |
-| animation_text | str | 动画文本 | 待调查 |
-| blink_event_type | num | 闪烁事件类型 | 待调查 |
-| show_terminal | num | 显示端标识 | 待调查 |
-| toast | str | 浮窗提示 | 待调查 |
+| capsule_type | num | 胶囊类型 | 如 `1` 可能代表首礼破冰 Buff。 |
+| text | str | 胶囊文本 | 如 `"首次送礼翻倍中"`。 |
+| animation_text | str | 动画跑马灯文本 | 如 `"首次送礼 <%2倍%> PK值加成"`。 |
+| end_time | num | 结束时间戳 | 秒级。倒计时结束时前端移除此胶囊。 |
+| biz_style_type | num | 业务UI样式 | |
+| url | str | 唤起协议 | 包含如 `bilibili://live/...` 的协议，点击后唤起底部的对应面板。 |
+
+data.members.capsules_v2数组 (PK 限时挑战特效胶囊)
+
+当 PK 过程中触发了限时翻倍、连击任务等局内挑战时下发。
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| id | str | 胶囊ID | 如 `"1"`，`"2"`，或 `"10"`。 |
+| text | str | 提示文本 | 如 `"完成挑战获得<%2倍%>PK值"`、`"差1人翻倍"` 等。 |
+| capsule_type | num | 胶囊类型 | 例如 `4` 或 `5`。 |
+| biz_style_type | num | 业务样式类型 | 决定前端 UI 的渲染样式。 |
+| end_time | num | 截止时间戳 | 秒级。限时任务结束的时间，为 `0` 代表无倒计时。 |
+| progress | num | 进度 | 任务当前进度。 |
+| url | str | 跳转链接 | |
+| animation_text | str | 动画文本 | |
 
 data.pk_play字段 (UI与玩法特效配置)
 
-| 字段 | 类型 |   内容  |    备注   |
-| ---- | ---- | ------ | --------- |
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
 | dm_conf | obj | 弹幕配置 | 包含 `bg_color` (背景色) 和 `font_color` (字体色)。 |
 | pre_duration | num | 准备时长 | 如 `10` 秒。 |
 | show_streak | bool | 是否显示连胜特效 | |
-| escape | obj | 逃跑控制与提示 | 包含 `count` (逃跑次数), `puni_time` (惩罚时间), 以及 `tips` (提示语，如 `"是否要提前结束PK?"`)。 |
-| final_conf | obj | 决战时刻配置 | 最后冲刺阶段的配置 (`start_time`, `end_time`, `switch`)。 |
+| escape | obj/null | 逃跑控制与提示 | 包含 `count` (逃跑次数), `puni_time` (惩罚时间), 以及 `tips` (提示语)。 |
+| final_conf | obj/null | 决战时刻配置 | 最后冲刺阶段的配置。视频 PK 中常为 `null`。 |
 | pk_score_multiple_play | obj/null | PK积分翻倍配置 | 翻倍玩法相关。 |
 
 <details>
-<summary>查看消息示例 (包含逃跑提示的情况)：</summary>
+<summary>查看消息示例 (包含逃跑提示与新版胶囊)：</summary>
 
 ```json
 {
@@ -3354,64 +3526,57 @@ data.pk_play字段 (UI与玩法特效配置)
     "invite_pk_resp": null,
     "members": [
       {
-        "assist_info": [
+        "assist_info": [],
+        "battle_level": {
+          "icon": "[https://i0.hdslb.com/bfs/live/eba0996322c2b972d93b38ddca5eb7e377c233ea.png](https://i0.hdslb.com/bfs/live/eba0996322c2b972d93b38ddca5eb7e377c233ea.png)",
+          "url": "[https://live.bilibili.com/activity/live-activity-battle/index.html](https://live.bilibili.com/activity/live-activity-battle/index.html)"
+        },
+        "capsules": [
           {
-            "award_content": "",
-            "face": "[https://i0.hdslb.com/bfs/face/be1dd12a0c5dbd296bdf09246b6e5ee5093c0324.jpg](https://i0.hdslb.com/bfs/face/be1dd12a0c5dbd296bdf09246b6e5ee5093c0324.jpg)",
-            "is_mystery": false,
-            "rank": 1,
-            "uid": 36711753,
-            "uname": "橘町w"
+            "animation_text": "首次送礼 <%2倍%> PK值加成",
+            "biz_style_type": 0,
+            "blink_event_type": 0,
+            "capsule_type": 1,
+            "end_time": 1777989646,
+            "id": "",
+            "progress": 0,
+            "show_terminal": 0,
+            "text": "首次送礼翻倍中",
+            "toast": "",
+            "url": "bilibili://live/openRoomPanel/giftPanel?param=%7B%22source_event%22%3A%2242%22%7D"
           }
         ],
-        "battle_level": {
-          "icon": "[https://i0.hdslb.com/bfs/live/4022aa441d1bcdd2f98ac1f15767f5c8994be01d.png](https://i0.hdslb.com/bfs/live/4022aa441d1bcdd2f98ac1f15767f5c8994be01d.png)",
-          "url": "[https://live.bilibili.com/activity/live-activity-battle/index.html?room_id=24538659](https://live.bilibili.com/activity/live-activity-battle/index.html?room_id=24538659)..."
-        },
-        "capsules": null,
         "capsules_v2": null,
         "date_streak": 0,
-        "face": "[https://i1.hdslb.com/bfs/face/a415ce881066fb8f71132253effcdde62540bc05.jpg](https://i1.hdslb.com/bfs/face/a415ce881066fb8f71132253effcdde62540bc05.jpg)",
-        "golds": 108100,
-        "group_id": 0,
+        "face": "[https://i2.hdslb.com/bfs/face/53d4172ad35e5369c74be82d7cd8fee2cb3d79b0.jpg](https://i2.hdslb.com/bfs/face/53d4172ad35e5369c74be82d7cd8fee2cb3d79b0.jpg)",
+        "golds": 0,
         "is_follow": 0,
-        "is_latest_streak": false,
-        "is_winner": 1,
-        "order": 0,
-        "pk_cards": null,
-        "pk_multiple_status": 0,
-        "play": null,
-        "power": "",
+        "is_winner": 0,
         "rank": 1,
-        "rank_v2": 0,
-        "room_id": 24538659,
-        "status": 3,
-        "uid": 512033026,
-        "uname": "西妮贝尔",
-        "votes": 1981,
-        "votes_text": "1981"
+        "room_id": 1989942906,
+        "status": 0,
+        "uid": 3546928398731612,
+        "uname": "糯川夕夕-福星高照",
+        "votes": 0,
+        "votes_text": "0"
       }
     ],
-    "mill_timestamp": 1776343803553,
+    "mill_timestamp": 1777989606101,
     "pk_basic": {
-      "biz_session_id": "1776343426074512033026",
-      "end_time": 1776343736,
-      "init_id": 24538659,
-      "init_uid": 512033026,
-      "main_page": "[https://live.bilibili.com/activity/live-activity-battle/index.html](https://live.bilibili.com/activity/live-activity-battle/index.html)...",
-      "muti_pk_type": 3,
-      "pk_id": 394393841,
-      "punish_end_time": 1776343799,
+      "biz_session_id": "17779895839143546928398731612",
+      "end_time": 1777989916,
+      "init_id": 1989942906,
+      "init_uid": 3546928398731612,
+      "muti_pk_type": 4,
+      "pk_id": 395123499,
+      "punish_end_time": 1777989976,
       "punish_text": "惩罚",
-      "satellite_info": null,
-      "season_id": 96,
-      "sprint_duration": 10,
-      "start_time": 1776343426,
-      "status": 1001,
+      "start_time": 1777989606,
+      "status": 101,
       "status_msg": "",
-      "sub_type": 8,
+      "sub_type": 5,
       "template_id": "multi_conn_grid",
-      "type": 2
+      "type": 6
     },
     "pk_group": null,
     "pk_match_info": null,
@@ -3420,26 +3585,17 @@ data.pk_play字段 (UI与玩法特效配置)
         "bg_color": "#72C5E2",
         "font_color": "#FFE10B"
       },
-      "escape": {
-        "count": 0,
-        "puni_time": 0,
-        "tips": "是否要提前结束PK?"
-      },
-      "final_conf": {
-        "end_time": 0,
-        "start_time": 0,
-        "switch": 0
-      },
-      "pk_score_multiple_play": null,
+      "escape": null,
+      "final_conf": null,
       "pre_duration": 10,
       "show_streak": false
     },
-    "timestamp": 1776343803
+    "timestamp": 1777989606
   },
-  "msg_id": "92054406934093824:1000:1000",
+  "msg_id": "93780155803128320:1000:1000",
   "p_is_ack": true,
   "p_msg_type": 1,
-  "send_time": 1776343803605
+  "send_time": 1777989605978
 }
 ```
 </details>
