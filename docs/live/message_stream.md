@@ -3600,32 +3600,101 @@ data.pk_play字段 (UI与玩法特效配置)
 ```
 </details>
 
-#### PK惩罚战斗结束
+#### PK 战斗结算数据 (PK_BATTLE_END)
 
-当 PK 正常结束并度过惩罚倒计时，或者一方强制中断/逃跑导致 PK 提前结束时，服务器会广播此指令清理状态。
+当 PK 倒计时归零，进入结算阶段时下发此指令。包含双方的最终比分、胜负判定（`winner_type`）、获胜方的大哥助攻榜（MVP）以及榜一用户的昵称。此指令与 `PK_BATTLE_SETTLE_NEW` 作用高度一致，由于 B 站有多种 PK 玩法（如常规连麦、大乱斗等），不同玩法可能会分别下发这两种结算大包。两者的核心字段结构非常相似。经实测，这个包只会出现在大乱斗模式，
 
 json格式
 
 | 字段 | 类型 | 内容   | 备注      |
 | ---- | ---- | ------ | --------- |
-| cmd  | str  | "PK_BATTLE_PUNISH_END" | 指示 PK 阶段彻底结束，准备恢复常规直播间 UI |
-| data | obj  | 战斗类型数据 | 见下方展开 |
+| cmd  | str  | "PK_BATTLE_END" | 指示 PK 进入结算阶段并展示成绩 |
+| data | obj  | 结算大包 | 包含最终胜负判定与得分。 |
 | msg_id | str | 消息序列号 | |
-| p_is_ack | bool | 是否需要回执 | |
-| p_msg_type | num | 消息协议类型 | |
 | pk_id | num | PK 唯一标识 | |
-| pk_status | num | 结束状态码 | `1001` 通常代表非正常/提前终止 |
-| status_msg | str | 状态信息 | |
-| template_id | str | UI 模板ID | 如 `"multi_conn_grid"` |
+| pk_status | num | PK 状态码 | 此时为 **`401`**（代表结算阶段） |
 | send_time | num | 发送时间戳 | 毫秒级 |
-| timestamp | num | 时间戳 | 秒级 |
+| timestamp | num | 结算时间戳 | 秒级 |
 
 data字段
 
 | 字段 | 类型 | 内容   |   备注   |
 | ---- | ---- | ------ | -------- |
-| battle_type | num | 战斗大类 | |
-| battle_sub_type | num | 战斗子类 | |
+| battle_type | num | 战斗类型 | 例如 `1` |
+| battle_sub_type | num | 战斗子类型 | 例如 `0` |
+| dm_conf | obj | 弹幕配置 | 包含 `bg_color` 和 `font_color` |
+| init_info | obj | 发起方结算信息 | 包含票数、MVP列表和胜负状态。 |
+| match_info | obj | 匹配方结算信息 | 包含票数、MVP列表和胜负状态。 |
+| show_streak | bool | 显示连胜 | |
+| timer | num | 阶段倒计时 | 结算/惩罚阶段的持续时间（如 `10` 秒）。 |
+
+data.init_info / data.match_info (双方结算详情)
+
+| 字段 | 类型 | 内容   |   备注   |
+| ---- | ---- | ------ | -------- |
+| room_id | num | 直播间长号 | |
+| votes | num | 最终总票数 | 该阵营在本次 PK 中的最终得分。 |
+| winner_type | num | 胜负判定标识 | 待调查统计（如例子中 `2` 为获胜方，`-1` 为失败方）。 |
+| best_uname | str | 榜一昵称 | 该阵营贡献最高的大哥名字。 |
+| assist_info | array | 助攻榜单(MVP) | 包含详细的大哥贡献排名数组（内含头像 `face`、名字 `uname` 等），用于前端渲染 MVP 展示台。 |
+
+<details>
+<summary>查看消息示例：</summary>
+
+```json
+{
+  "cmd": "PK_BATTLE_END",
+  "data": {
+    "battle_type": 1,
+    "init_info": {
+      "best_uname": "南梦若生",
+      "room_id": 27559004,
+      "votes": 6,
+      "winner_type": -1,
+      "assist_info": []
+    },
+    "match_info": {
+      "best_uname": "奇趣探索号233",
+      "room_id": 1964690546,
+      "votes": 170,
+      "winner_type": 2,
+      "assist_info": []
+    },
+    "timer": 10
+  },
+  "pk_id": 395115792,
+  "pk_status": 401,
+  "timestamp": 1777979539
+}
+```
+</details>
+
+#### PK惩罚战斗结束
+
+用于通知客户端彻底结束 PK 会话并清理相关的连麦/PK UI，恢复到常规单人直播间布局。无论是正常走完惩罚倒计时，还是主播强制逃跑中断，都会以该指令作为 PK 状态机的最终终结。
+
+json格式
+
+| 字段 | 类型 | 内容 | 备注 |
+| ---- | ---- | ---- | ---- |
+| cmd | str | "PK_BATTLE_PUNISH_END" | 指示彻底清理 PK 画面 |
+| data | obj | 战斗类型数据 | 见下方展开 |
+| msg_id | str | 消息序列号 | |
+| p_is_ack | bool | 是否需要回执 | |
+| p_msg_type | num | 消息协议类型 | |
+| pk_id | num | PK 唯一标识 | |
+| pk_status | num | 结束状态码 | **`1001`** 代表 PK 流程完全终结退出 |
+| send_time | num | 发送时间戳 | 毫秒级 |
+| status_msg | str | 状态信息 | |
+| template_id | str | UI 模板ID | 如 `"multi_conn_grid"` |
+| timestamp | num | 时间戳 | 秒级 |
+
+data字段
+
+| 字段 | 类型 | 内容 | 备注 |
+| ---- | ---- | ---- | ---- |
+| battle_type | num | 战斗大类 | 例如 `1` |
+| battle_sub_type | num | 战斗子类 | 例如 `0` |
 
 <details>
 <summary>查看消息示例：</summary>
@@ -3635,17 +3704,17 @@ data字段
   "cmd": "PK_BATTLE_PUNISH_END",
   "data": {
     "battle_sub_type": 0,
-    "battle_type": 2
+    "battle_type": 1
   },
-  "msg_id": "92054406915172352:1000:1000",
+  "msg_id": "93769602568326144:1000:1000",
   "p_is_ack": true,
   "p_msg_type": 1,
-  "pk_id": 394393841,
+  "pk_id": 395115792,
   "pk_status": 1001,
-  "send_time": 1776343803587,
+  "send_time": 1777979541629,
   "status_msg": "",
   "template_id": "multi_conn_grid",
-  "timestamp": 1776343803
+  "timestamp": 1777979541
 }
 ```
 </details>
