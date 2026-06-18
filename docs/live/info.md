@@ -555,11 +555,19 @@ curl -G 'https://api.live.bilibili.com/live_user/v1/Master/info' \
 | ttl     | num | 1    |                         |
 | data    | obj | 信息本体 |                         |
 
-`data`对象：
+`data`对象对象说明：
 
-| 字段  | 类型  | 内容    | 备注         |
-|-----|-----|-------|------------|
-| uid | str | 直播间信息 | 实际字段为主播mid |
+> **注意**：`data` 不是固定字段结构，而是 **以 uid 字符串为 key 的动态对象**，示例：
+
+```json
+{
+  "data": {
+    "672328094": {  // ← key 为 uid 字符串，非固定字段名
+      ...
+    }
+  }
+}
+```
 
 `uid`对象：
 
@@ -636,6 +644,217 @@ curl 'https://api.live.bilibili.com/room/v1/Room/get_status_info_by_uids' \
       "hidden_till": "0000-00-00 00:00:00",
       "broadcast_type": 0
     }
+  }
+}
+```
+
+</details>
+
+## 获取大航海榜 / 陪伴榜
+
+> https://api.live.bilibili.com/xlive/app-room/v2/guardTab/topListNew
+
+*请求方式：GET*
+
+**URL参数：**
+
+| 参数名       | 类型  | 内容     | 必要性 | 备注                |
+|-----------|-----|--------|-----|--------------------|
+| roomid    | num | 直播间id  | 必要  | 真实房间号             |
+| ruid      | num | 主播uid  | 必要  |                    |
+| page      | num | 页码     | 必要  | **必填**, 缺少会返回 -400 |
+| typ       | num | 榜单类型   | 必要  | 见下方映射              |
+| page_size | num | 每页数量   | 可选  | 默认20               |
+| platform  | str | `web`  | 可选  |                    |
+
+**typ 映射：**
+
+| typ | 含义              | remind_msg          |
+|-----|-----------------|---------------------|
+| 3   | 月大航海榜 / 月亲密度    | 榜单每月更新，统计月大航海亲密度  |
+| 4   | 周大航海榜 / 周亲密度    | 榜单每周更新，统计周大航海亲密度  |
+| 5   | 总大航海榜 / 头号粉丝榜风格 | 头号粉丝大航海，上船后可上榜    |
+
+> typ=5 返回的 top3 条目最完整，最接近常规展示榜单形态。不同 typ 的排行顺序不同（统计窗口差异）。
+
+**json回复：**
+
+根对象：
+
+| 字段      | 类型  | 内容   | 备注  |
+|---------|-----|------|-----|
+| code    | num | 返回值  |     |
+| message | str | 错误信息 |     |
+| data    | obj | 信息本体 |     |
+
+`data`对象：
+
+| 字段         | 类型    | 内容     | 备注  |
+|------------|-------|--------|-----|
+| info       | obj   | 榜单统计信息 |     |
+| page       | num   | 当前页码   |     |
+| list       | array | 榜单列表   |     |
+| top3       | array | 前三名    |     |
+| extop      | array | 扩展排行   |     |
+| typ        | num   | 榜单类型   |     |
+| remind_msg | str   | 提示信息   |     |
+| ab         | obj   | AB实验标记 | 含 guard_accompany_list |
+
+`info`对象：
+
+| 字段  | 类型  | 内容   | 备注  |
+|-----|-----|------|-----|
+| num | num | 上榜人数 |     |
+
+`list` / `top3` 条目：
+
+| 字段        | 类型  | 内容   | 备注               |
+|-----------|-----|------|-------------------|
+| rank      | num | 排名   |                   |
+| score     | num | 亲密度分 |                   |
+| accompany | num | 陪伴天数 | **即"陪伴榜"核心数据**     |
+| uinfo     | obj | 用户信息 | 含 uid, base.name  |
+| medal     | obj | 粉丝勋章 | 含 guard_level     |
+| guard     | obj | 大航海  | 含 level (1=舰长/2=提督/3=总督), 无人开通时为 null |
+
+> **关于陪伴榜**：当前未发现独立的"陪伴榜"公开接口。陪伴天数（`accompany`）作为字段嵌入在大航海榜返回中。`guardTab/topListNew` 是目前确认可同时获取大航海排名和陪伴数据的公开接口。
+
+**示例：**
+
+查询直播间`roomid=1972015475`、主播`ruid=3706988200463216`的总榜
+
+```shell
+curl -G 'https://api.live.bilibili.com/xlive/app-room/v2/guardTab/topListNew' \
+--data-urlencode 'roomid=1972015475' \
+--data-urlencode 'ruid=3706988200463216' \
+--data-urlencode 'page=1' \
+--data-urlencode 'typ=5' \
+--data-urlencode 'page_size=5'
+```
+
+<details>
+<summary>查看响应示例：</summary>
+
+```json
+{
+  "code": 0,
+  "data": {
+    "info": { "num": 5 },
+    "page": 1,
+    "top3": [
+      {
+        "rank": 1,
+        "score": 0,
+        "accompany": 28,
+        "guard": { "level": null },
+        "uinfo": { "uid": "", "base": { "name": "宝贝H甯朦" } },
+        "medal": { "guard_level": null }
+      }
+    ],
+    "list": [
+      {
+        "rank": 4,
+        "score": 0,
+        "accompany": 34,
+        "guard": { "level": null },
+        "uinfo": { "base": { "name": "夜羽酆" } }
+      }
+    ],
+    "remind_msg": "头号粉丝大航海，上船后可上榜"
+  }
+}
+```
+
+</details>
+
+## 主动获取榜单排名
+
+> https://api.live.bilibili.com/xlive/general-interface/v1/rank/queryContributionRank
+
+*请求方式：GET*
+
+认证方式：需要 Wbi 签名（`w_rid` / `wts`）；未登录也可获得部分数据，但完整性可能受限
+
+**URL参数：**
+
+| 参数名       | 类型  | 内容     | 必填 | 备注                                    |
+|-----------|-----|--------|----|----------------------------------------|
+| ruid      | num | 主播uid  | 必要 |                                        |
+| room_id   | num | 直播间id  | 必要 | 真实房间号                                  |
+| page      | num | 页码     | 必要 |                                        |
+| page_size | num | 每页数量   | 必要 |                                        |
+| type      | str | 榜单类型   | 必要 | 见下方映射                                  |
+| switch    | str | 榜单切换参数 | 必要 | 见下方映射                                  |
+| platform  | str | `web`  | 可选 |                                        |
+
+**榜单类型映射：**
+
+| 榜单        | type           | switch              | 建议 page_size |
+|-----------|----------------|---------------------|--------------|
+| 在线榜 / 高能榜 | `online_rank`  | `contribution_rank` | 100          |
+| 日榜        | `daily_rank`   | `today_rank`        | 7            |
+| 周榜        | `weekly_rank`  | `current_week_rank` | 7            |
+| 月榜        | `monthly_rank` | `current_month_rank`| 7            |
+
+> **注意**：此接口请求依赖动态签名（`w_rid`、`wts`），示例中的签名值不可长期复制使用。未登录/匿名状态下也可能获得部分榜单数据。
+
+**json回复：**
+
+根对象：
+
+| 字段      | 类型  | 内容   | 备注  |
+|---------|-----|------|-----|
+| code    | num | 返回值  |     |
+| message | str | 错误信息 |     |
+| data    | obj | 信息本体 |     |
+
+`data`对象：
+
+| 字段    | 类型   | 内容   | 备注  |
+|-------|------|------|-----|
+| item  | array | 榜单列表 |     |
+
+`item`数组中的对象：
+
+| 字段          | 类型  | 内容   | 备注  |
+|-------------|-----|------|-----|
+| uid         | num | 用户id |     |
+| name        | str | 用户名  |     |
+| rank        | num | 排名   |     |
+| score       | num | 贡献分  |     |
+| guard_level | num | 舰队等级 |     |
+
+**示例：**
+
+查询直播间`room_id=5440`、主播`ruid=9617619`的在线榜
+
+```shell
+curl -G 'https://api.live.bilibili.com/xlive/general-interface/v1/rank/queryContributionRank' \
+--data-urlencode 'ruid=9617619' \
+--data-urlencode 'room_id=5440' \
+--data-urlencode 'page=1' \
+--data-urlencode 'page_size=20' \
+--data-urlencode 'type=online_rank' \
+--data-urlencode 'switch=contribution_rank'
+```
+
+<details>
+<summary>查看响应示例：</summary>
+
+```json
+{
+  "code": 0,
+  "message": "0",
+  "data": {
+    "item": [
+      {
+        "uid": 123456,
+        "name": "用户A",
+        "rank": 1,
+        "score": 99999,
+        "guard_level": 3
+      }
+    ]
   }
 }
 ```
